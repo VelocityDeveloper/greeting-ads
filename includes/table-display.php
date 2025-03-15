@@ -59,6 +59,26 @@ if (isset($_GET['edit'])) {
 
 <div class="wrap">
 
+  <div class="card" style="max-width: 100% !important;">
+    <h2 class="title">Pencarian Greeting</h2>
+    <form id="search-form" class="form-wrap">
+      <table class="form-table">
+        <tr>
+          <th scope="row"><label for="search_id_grup_iklan">utm_content</label></th>
+          <td><input type="text" name="id_grup_iklan" id="search_id_grup_iklan" class="regular-text" required></td>
+        </tr>
+        <tr>
+          <th scope="row"><label for="search_nomor_kata_kunci">utm_medium</label></th>
+          <td><input type="text" name="nomor_kata_kunci" id="search_nomor_kata_kunci" class="regular-text" required></td>
+        </tr>
+      </table>
+      <button type="submit" class="button button-primary">Cari</button>
+    </form>
+
+    <!-- Output hasil pencarian -->
+    <div id="search-result"></div>
+  </div>
+
   <!-- Form impor CSV -->
   <div class="card" style="max-width: 100% !important;">
     <h2 class="title">Impor Data CSV</h2>
@@ -164,3 +184,44 @@ if (isset($_GET['edit'])) {
     <?php endif; ?>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    const searchResult = document.getElementById('search-result');
+
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Ambil nilai dari input form
+      const idGrupIklan = document.getElementById('search_id_grup_iklan').value;
+      const nomorKataKunci = document.getElementById('search_nomor_kata_kunci').value;
+
+      // Kirim data ke server via AJAX
+      fetch(ajaxurl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            action: 'search_greeting', // Nama action untuk hook AJAX
+            id_grup_iklan: idGrupIklan,
+            nomor_kata_kunci: nomorKataKunci,
+          }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Tampilkan hasil pencarian
+            searchResult.innerHTML = `<p><strong>Greeting:</strong> ${data.data.greeting}</p>`;
+          } else {
+            searchResult.innerHTML = `<p>${data.message}</p>`;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          searchResult.innerHTML = `<p>Terjadi kesalahan saat mencari data.</p>`;
+        });
+    });
+  });
+</script>
