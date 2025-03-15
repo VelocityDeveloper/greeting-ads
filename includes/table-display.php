@@ -27,8 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       'greeting' => sanitize_text_field($_POST['greeting']),
     );
     greeting_ads_update_data($_POST['id'], $data);
-  } elseif (isset($_GET['action']) && $_GET['action'] == 'delete') {
-    greeting_ads_delete_data($_GET['id']);
   }
   $edit_id = isset($_GET['edit']) ? $_GET['edit'] : '';
 }
@@ -145,8 +143,8 @@ if (isset($_GET['edit'])) {
               <td><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
               <td><?php echo esc_html($row['greeting']); ?></td>
               <td>
-                <a href="?page=greeting-ads&edit=<?php echo esc_attr($row['id']); ?>" class="button button-small">Edit</a>
-                <a href="?page=greeting-ads&action=delete&id=<?php echo esc_attr($row['id']); ?>" class="button button-small button-danger" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
+                <a href="?page=greeting-ads&edit=<?php echo esc_attr($row['id']); ?>&paged=<?php echo esc_attr($current_page); ?>" class="button button-small">Edit</a>
+                <a href="#" class="button button-small button-danger delete-data" data-id="<?php echo esc_attr($row['id']); ?>" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -184,7 +182,6 @@ if (isset($_GET['edit'])) {
     <?php endif; ?>
   </div>
 </div>
-
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const searchForm = document.getElementById('search-form');
@@ -222,6 +219,45 @@ if (isset($_GET['edit'])) {
           console.error('Error:', error);
           searchResult.innerHTML = `<p>Terjadi kesalahan saat mencari data.</p>`;
         });
+    });
+  });
+
+  // fungsi hapus
+  document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-data');
+
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Ambil ID dari atribut data-id
+        const id = this.getAttribute('data-id');
+
+        // Kirim permintaan AJAX
+        fetch(ajaxurl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              action: 'delete_greeting', // Nama action untuk hook AJAX
+              id: id,
+            }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(data.data); // Tampilkan pesan sukses
+              location.reload(); // Reload halaman untuk memperbarui tabel
+            } else {
+              alert(data.data); // Tampilkan pesan error
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus data.');
+          });
+      });
     });
   });
 </script>
