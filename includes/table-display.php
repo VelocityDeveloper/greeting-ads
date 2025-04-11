@@ -40,7 +40,7 @@ $offset = ($current_page - 1) * $per_page;
 $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
 // Data untuk halaman saat ini
-$data = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name LIMIT %d OFFSET %d", $per_page, $offset), ARRAY_A);
+$data = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name ORDER BY id DESC LIMIT %d OFFSET %d", $per_page, $offset), ARRAY_A);
 
 // Untuk edit, cari data berdasarkan ID
 $edit_data = null;
