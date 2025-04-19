@@ -40,7 +40,35 @@ $offset = ($current_page - 1) * $per_page;
 $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
 // Data untuk halaman saat ini
-$data = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name ORDER BY id DESC LIMIT %d OFFSET %d", $per_page, $offset), ARRAY_A);
+$search_kata_kunci = isset($_GET['search_kata_kunci']) ? sanitize_text_field($_GET['search_kata_kunci']) : '';
+$search_nomor_kata_kunci = isset($_GET['search_nomor_kata_kunci']) ? sanitize_text_field($_GET['search_nomor_kata_kunci']) : '';
+
+$where_clauses = [];
+$params = [];
+
+if (!empty($search_kata_kunci)) {
+  $where_clauses[] = "kata_kunci LIKE %s";
+  $params[] = '%' . $wpdb->esc_like($search_kata_kunci) . '%';
+}
+if (!empty($search_nomor_kata_kunci)) {
+  $where_clauses[] = "nomor_kata_kunci LIKE %s";
+  $params[] = '%' . $wpdb->esc_like($search_nomor_kata_kunci) . '%';
+}
+
+$where_sql = '';
+if (!empty($where_clauses)) {
+  $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
+}
+
+$total_items_query = $wpdb->prepare("SELECT COUNT(*) FROM $table_name $where_sql", ...$params);
+$total_items = $wpdb->get_var($total_items_query);
+
+
+$params[] = $per_page;
+$params[] = $offset;
+$query = "SELECT * FROM $table_name $where_sql ORDER BY id DESC LIMIT %d OFFSET %d";
+
+$data = $wpdb->get_results($wpdb->prepare($query, ...$params), ARRAY_A);
 
 // Untuk edit, cari data berdasarkan ID
 $edit_data = null;
@@ -120,6 +148,12 @@ if (isset($_GET['edit'])) {
   <!-- Tabel data widefat -->
   <div class="card" style="max-width: 100% !important;">
     <h2 class="title">Data Greeting Ads</h2>
+    <form method="get" class="form-wrap" style="margin-bottom: 1rem;">
+      <input type="hidden" name="page" value="greeting-ads">
+      <input type="text" name="search_kata_kunci" placeholder="Cari Kata Kunci" value="<?php echo isset($_GET['search_kata_kunci']) ? esc_attr($_GET['search_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
+      <input type="text" name="search_nomor_kata_kunci" placeholder="Cari Nomor Kata Kunci" value="<?php echo isset($_GET['search_nomor_kata_kunci']) ? esc_attr($_GET['search_nomor_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
+      <input type="submit" class="button" value="Filter">
+    </form>
     <table class="wp-list-table widefat fixed striped">
       <thead>
         <tr>
@@ -165,7 +199,7 @@ if (isset($_GET['edit'])) {
           <span class="displaying-num"><?php echo number_format_i18n($total_items); ?> item</span>
           <span class="pagination-links">
             <?php if ($current_page > 1): ?>
-              <a class="prev-page button" href="?page=greeting-ads&paged=<?php echo ($current_page - 1); ?>">« Previous</a>
+              <a class="prev-page button" href="<?php echo add_query_arg(['paged' => ($current_page - 1)]); ?>">« Previous</a>
             <?php endif; ?>
 
             <span class="paging-input">
@@ -174,7 +208,7 @@ if (isset($_GET['edit'])) {
             </span>
 
             <?php if ($current_page < $total_pages): ?>
-              <a class="next-page button" href="?page=greeting-ads&paged=<?php echo ($current_page + 1); ?>">Next »</a>
+              <a class="next-page button" href="<?php echo add_query_arg(['paged' => ($current_page + 1)]); ?>">Next »</a>
             <?php endif; ?>
           </span>
         </div>
