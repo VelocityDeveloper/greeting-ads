@@ -177,7 +177,7 @@ if (isset($_GET['edit'])) {
               <td><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
               <td><?php echo esc_html($row['greeting']); ?></td>
               <td>
-                <a href="?page=greeting-ads&edit=<?php echo esc_attr($row['id']); ?>&paged=<?php echo esc_attr($current_page); ?>" class="button button-small">Edit</a>
+                <a href="?page=greeting-ads&edit=<?php echo esc_attr($row['id']); ?>&paged=<?php echo esc_attr($current_page); ?>&per_page=<?php echo esc_attr($per_page); ?>&search_kata_kunci=<?php echo esc_attr($search_kata_kunci); ?>&search_nomor_kata_kunci=<?php echo esc_attr($search_nomor_kata_kunci); ?>" class="button button-small">Edit</a>
                 <a href="#" class="button button-small button-danger delete-data" data-id="<?php echo esc_attr($row['id']); ?>" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
               </td>
             </tr>
