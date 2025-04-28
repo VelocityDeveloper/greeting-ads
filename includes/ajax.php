@@ -1,0 +1,64 @@
+<?php
+
+add_action('wp_ajax_rekap_chat_form', 'rekap_chat_form');
+add_action('wp_ajax_nopriv_rekap_chat_form', 'rekap_chat_form');
+
+function rekap_chat_form()
+{
+  global $wpdb;
+
+  $nama = sanitize_text_field($_POST['nama']);
+  $no_whatsapp = sanitize_text_field($_POST['no_whatsapp']);
+  $jenis_website = sanitize_text_field($_POST['jenis_website']);
+  $via = sanitize_text_field($_POST['via']);
+
+  // Ambil data tambahan dari cookie
+  $utm_content = $_COOKIE['utm_content'] ?? '';
+  $utm_medium = $_COOKIE['utm_medium'] ?? '';
+  $greeting = $_COOKIE['greeting'] ?? 'v0';
+
+  // Validasi AI terhadap jenis website
+  $ai_result = validasi_jenis_web($jenis_website);
+  $wa_result = validasi_no_wa($no_whatsapp);
+
+  // Insert ke database
+  $wpdb->insert(
+    $wpdb->prefix . 'rekap_form',
+    [
+      'nama' => $nama,
+      'no_whatsapp' => $no_whatsapp,
+      'jenis_website' => $jenis_website,
+      'ai_result' => $ai_result,
+      'via' => $via,
+      'utm_content' => $utm_content,
+      'utm_medium' => $utm_medium,
+      'greeting' => $greeting,
+      'created_at' => current_time('mysql'),
+    ]
+  );
+
+  // Kirim ke Telegram hanya kalau greeting bukan 'v0'
+  $pesan = 'Greeting kosong, pesan tidak dikirim.';
+  if ($greeting !== 'v0') {
+    $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
+      . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
+      . "Greeting: <b>{$greeting}</b>\n";
+
+    $chatIds = [
+      // '184441126', //contoh: hp cs
+      // '785329499', //contoh: telegram aditya k
+      '-944668693'   // contoh: grup
+    ];
+
+    // sementara mematikan bot telegram
+    // $pesan = kirim_telegram($messageText, $chatIds);
+    $pesan = 'Pesan berhasil dikirim!';
+  }
+
+  // Balikan response Ajax
+  wp_send_json_success([
+    'ai_result' => $ai_result,
+    'wa_result' => $wa_result,
+    'pesan' => $pesan
+  ]);
+}

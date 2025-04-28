@@ -42,7 +42,7 @@ $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 // Data untuk halaman saat ini
 $search_kata_kunci = isset($_GET['search_kata_kunci']) ? sanitize_text_field($_GET['search_kata_kunci']) : '';
 $search_nomor_kata_kunci = isset($_GET['search_nomor_kata_kunci']) ? sanitize_text_field($_GET['search_nomor_kata_kunci']) : '';
-
+$search_greeting = isset($_GET['search_greeting']) ? sanitize_text_field($_GET['search_greeting']) : '';
 $where_clauses = [];
 $params = [];
 
@@ -53,6 +53,10 @@ if (!empty($search_kata_kunci)) {
 if (!empty($search_nomor_kata_kunci)) {
   $where_clauses[] = "nomor_kata_kunci LIKE %s";
   $params[] = '%' . $wpdb->esc_like($search_nomor_kata_kunci) . '%';
+}
+if (!empty($search_greeting)) {
+  $where_clauses[] = "greeting LIKE %s";
+  $params[] = '%' . $wpdb->esc_like($search_greeting) . '%';
 }
 
 $where_sql = '';
@@ -152,6 +156,7 @@ if (isset($_GET['edit'])) {
       <input type="hidden" name="page" value="greeting-ads">
       <input type="text" name="search_kata_kunci" placeholder="Cari Kata Kunci" value="<?php echo isset($_GET['search_kata_kunci']) ? esc_attr($_GET['search_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
       <input type="text" name="search_nomor_kata_kunci" placeholder="Cari Nomor Kata Kunci" value="<?php echo isset($_GET['search_nomor_kata_kunci']) ? esc_attr($_GET['search_nomor_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
+      <input type="text" name="search_greeting" placeholder="Cari Greeting" value="<?php echo isset($_GET['search_greeting']) ? esc_attr($_GET['search_greeting']) : ''; ?>" style="margin-right: 10px;">
       <input type="submit" class="button" value="Filter">
     </form>
     <table class="wp-list-table widefat fixed striped">
