@@ -44,6 +44,10 @@ function rekap_chat_form()
       . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
       . "Greeting: <b>{$greeting}</b>\n";
 
+    if ($ai_result !== 'valid') {
+      $messageText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
+    }
+
     $chatIds = [
       // '184441126', //contoh: hp cs
       // '785329499', //contoh: telegram aditya k
@@ -51,8 +55,8 @@ function rekap_chat_form()
     ];
 
     // sementara mematikan bot telegram
-    // $pesan = kirim_telegram($messageText, $chatIds);
-    $pesan = 'Pesan berhasil dikirim!';
+    $pesan = kirim_telegram($messageText, $chatIds);
+    // $pesan = 'Pesan berhasil dikirim!';
   }
 
   // Balikan response Ajax
