@@ -53,29 +53,27 @@ function kirim_telegram($message, array $chatIds)
 /**
  * Melakukan validasi jenis website menggunakan OpenAI GPT API.
  *
- * @param string $jenis Deskripsi jenis website.
+ * @param string $input Deskripsi jenis website.
  * @return string 'valid', 'ngawur', atau 'unknown' tergantung hasil analisis GPT.
  */
-function validasi_jenis_web($jenis)
+function validasi_jenis_web($input)
 {
   $apiKey = get_option('openai_api_key');
-  $customPrompt = get_option('prompt_jenis_web') . 'Input: {{INPUT}}';
+  $prompt = get_option('prompt_jenis_web');
 
-  if (empty($apiKey) || empty($customPrompt)) {
+  if (empty($apiKey) || empty($prompt)) {
     return 'unknown'; // fallback kalau setting kosong
   }
-
-  $prompt = str_replace('{{INPUT}}', trim($jenis), $customPrompt);
 
   $payload = [
     'model' => 'gpt-4.1',
     'messages' => [
-      ['role' => 'system', 'content' => 'You are a helpful assistant that gives concise and clear recommendations.'],
-      ['role' => 'user', 'content' => $prompt]
+      ['role' => 'system', 'content' => $prompt],
+      ['role' => 'user', 'content' => $input]
     ],
-    'temperature' => 0.7,
+    'temperature' => 0,
     'top_p' => 1,
-    'max_tokens' => 1024,
+    'max_tokens' => 10,
     'presence_penalty' => 0,
     'frequency_penalty' => 0
   ];
@@ -102,13 +100,7 @@ function validasi_jenis_web($jenis)
 
   $gptReply = strtolower(trim($result['choices'][0]['message']['content'] ?? ''));
 
-  if ($gptReply === 'valid') {
-    return 'valid';
-  } elseif ($gptReply === 'ngawur') {
-    return 'ngawur';
-  } else {
-    return 'unknown'; // jika jawaban aneh
-  }
+  return in_array($gptReply, ['valid', 'ngawur', 'dilarang']) ? $gptReply : 'unknown';
 }
 
 // validasi nomor wa

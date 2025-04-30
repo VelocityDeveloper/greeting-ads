@@ -93,6 +93,7 @@ function chat_form_new($atts)
 
   <script>
     jQuery(function($) {
+
       function validateInputsNew() {
         let nama = $("#input-nama-new").val().trim();
         let wa = $("#input-whatsapp-new").val().trim();
@@ -175,16 +176,25 @@ function chat_form_new($atts)
           function(response) {
 
             if (response.success) {
-              if (response.data.ai_result === 'valid') {
-                $("#form-chat-new").trigger("reset");
+              if (response.data.ai_result === 'dilarang') {
+                // jika dilarang simpan di cookie kalau user ini terlarang
+                if (getCookie("dilarang") == null) {
+                  setCookie("dilarang", "true", 1);
+                }
 
-                dataLayer.push({
-                  event: 'klik_<?php echo $kondisi_gtag; ?>',
-                  button_id: '<?php echo $kondisi_gtag; ?>',
-                  nama: nama,
-                  no_whatsapp: whatsapp,
-                  jenis_website: website
-                });
+                $("#info-new").text("Data tidak valid.").css("color", "red");
+              } else if (response.data.ai_result === 'valid') {
+                $("#form-chat-new").trigger("reset");
+                // jika ada cookie dilarang maka datalayer tidak dikirim
+                if (getCookie("dilarang") == null) {
+                  dataLayer.push({
+                    event: 'klik_<?php echo $kondisi_gtag; ?>',
+                    button_id: '<?php echo $kondisi_gtag; ?>',
+                    nama: nama,
+                    no_whatsapp: whatsapp,
+                    jenis_website: website
+                  });
+                }
 
                 setTimeout(function() {
                   var redirectUrl = "<?php echo esc_js($redirect_url); ?>";
@@ -192,6 +202,7 @@ function chat_form_new($atts)
                   window.open(redirectUrl, '_blank');
                   // window.open("<?php echo esc_js($redirect_url); ?>", '_blank');
                 }, 350);
+
                 // $("#info-new").text("Submit data berhasil").css("color", "green");
               } else {
                 $("#info-new").text("Data tidak valid").css("color", "red");
@@ -220,6 +231,15 @@ function chat_form_new($atts)
       function getUrlParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
+      }
+
+      function setCookie(name, value, days) {
+        // expired 30 hari
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+
       }
     });
   </script>
