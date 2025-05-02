@@ -12,12 +12,13 @@ function chat_form_new($atts)
   $telp_ads = '082136302531';
   $telp_organik = '085701216057';
 
-  $nowhatsapp = (isset($_COOKIE['greeting']) || isset($_GET['gclid']) || isset($_GET['utm_source'])) ? $wa_ads : $wa_organik;
-  $notelp = (isset($_COOKIE['greeting']) || isset($_GET['gclid']) || isset($_GET['utm_source'])) ? $telp_ads : $telp_organik;
+  $nowhatsapp = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $wa_ads : $wa_organik;
+  $notelp = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $telp_ads : $telp_organik;
 
   $kondisi_gtag = ($nowhatsapp == $wa_ads) ? 'wa_ads' : 'wa_organik';
 
-  $c_greeting = $_COOKIE['greeting'] ?? 'v0';
+  $c_greeting = $_COOKIE['greeting'] ?? 'vx';
+  $c_greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $c_greeting : 'v0';
   $default_greeting = 'Hallo, Saya tertarik buat website jeniswebsite [' . $c_greeting . ']. Mohon infonya.';
 
   // Pakai URL dari shortcode jika ada, jika tidak pakai default WA

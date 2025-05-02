@@ -15,7 +15,8 @@ function rekap_chat_form()
   // Ambil data tambahan dari cookie
   $utm_content = $_COOKIE['utm_content'] ?? '';
   $utm_medium = $_COOKIE['utm_medium'] ?? '';
-  $greeting = $_COOKIE['greeting'] ?? 'v0';
+  $greeting = $_COOKIE['greeting'] ?? 'vx';
+  $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
 
   // Validasi AI terhadap jenis website
   $ai_result = validasi_jenis_web($jenis_website);
@@ -44,8 +45,11 @@ function rekap_chat_form()
       . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
       . "Greeting: <b>{$greeting}</b>\n";
 
-    if ($ai_result !== 'valid') {
+    if ($ai_result == 'ngawur') {
       $messageText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
+    }
+    if ($wa_result == 'dilarang') {
+      $messageText .= "<b style='font-weight: bold;'>⚠️ Dilarang</b>\n";
     }
 
     $chatIds = [
