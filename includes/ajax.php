@@ -37,6 +37,15 @@ function rekap_chat_form()
       'created_at' => current_time('mysql'),
     ]
   );
+  // kirim log ke telegram jika ada mysql error
+  if ($wpdb->last_error) {
+    $id_reports = [
+      '260162734', // mastoro
+      '785329499' // aditya k
+    ];
+    $log_message = "MySQL Error: " . $wpdb->last_error;
+    kirim_telegram($log_message, $id_reports);
+  }
 
   // Kirim ke Telegram hanya kalau greeting bukan 'v0'
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
