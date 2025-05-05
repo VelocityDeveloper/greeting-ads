@@ -18,6 +18,24 @@ function rekap_chat_form()
   $greeting = $_COOKIE['greeting'] ?? 'vx';
   $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
 
+  // Kirim ke Telegram hanya kalau greeting bukan 'v0' - modif by mas toro tanpa cek ai langsung kirim telegram
+  $pesan = 'Greeting kosong, pesan tidak dikirim.';
+  if ($greeting !== 'v0') {
+    $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
+      . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
+      . "Greeting: <b>{$greeting}</b>\n";
+
+    $chatIds = [
+      // '184441126', //contoh: hp cs
+      // '785329499', //contoh: telegram aditya k
+      '-944668693'   // contoh: grup
+    ];
+
+    // sementara mematikan bot telegram
+    $pesan = kirim_telegram($messageText, $chatIds);
+    // $pesan = 'Pesan berhasil dikirim!';
+  }
+
   // Validasi AI terhadap jenis website
   $ai_result = validasi_jenis_web($jenis_website);
   $wa_result = validasi_no_wa($no_whatsapp);
@@ -47,19 +65,21 @@ function rekap_chat_form()
     kirim_telegram($log_message, $id_reports);
   }
 
-  // Kirim ke Telegram hanya kalau greeting bukan 'v0'
+
+  // Kirim ke Telegram hanya kalau greeting bukan 'v0' - modif by mas toro setelah cek ai hanya kirim STATUSNYA AJA ke telegram
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
   if ($greeting !== 'v0') {
-    $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
-      . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
-      . "Greeting: <b>{$greeting}</b>\n";
+
+    // cek ai status
+    $statusText = "<b>Status:</b>\n";
 
     if ($ai_result == 'ngawur') {
-      $messageText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
+      $statusText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
     }
-    if ($wa_result == 'dilarang') {
-      $messageText .= "<b style='font-weight: bold;'>⚠️ Dilarang</b>\n";
+    if ($ai_result == 'dilarang') {
+      $statusText .= "<b style='font-weight: bold;'>⚠️ Gagal WA</b>\n";
     }
+
 
     $chatIds = [
       // '184441126', //contoh: hp cs
@@ -68,14 +88,16 @@ function rekap_chat_form()
     ];
 
     // sementara mematikan bot telegram
-    $pesan = kirim_telegram($messageText, $chatIds);
+    $pesan = kirim_telegram($statusText, $chatIds);
     // $pesan = 'Pesan berhasil dikirim!';
   }
+
 
   // Balikan response Ajax
   wp_send_json_success([
     'ai_result' => $ai_result,
     'wa_result' => $wa_result,
     'pesan' => $pesan
+
   ]);
 }

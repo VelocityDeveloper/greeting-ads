@@ -6,7 +6,7 @@ function chat_form_new($atts)
   ], $atts, 'chat-form-new');
 
   ob_start();
-  $wa_ads = '6285729319861';
+  $wa_ads = '6282136302531';
   $wa_organik = '6285701216057';
 
   $telp_ads = '082136302531';
@@ -46,7 +46,7 @@ function chat_form_new($atts)
       </div>
       <div class="jawaban">
         <label class="website-input">
-          <textarea rows="2" min="10" class="input-control" id="jenis-website-new" placeholder="Misal: web bisnis, web sekolah, web pemerintah, dll" required></textarea>
+          <textarea rows="2" min="10" class="input-control" id="jenis-website-new" placeholder="Misal: web bisnis kopi, web portal berita, web perusahaan ekspedisi, web sekolah, dll" required></textarea>
           <span class="info" id="info-website-new"></span>
         </label>
       </div>
