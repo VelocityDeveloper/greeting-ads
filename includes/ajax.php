@@ -17,24 +17,25 @@ function rekap_chat_form()
   $utm_medium = $_COOKIE['utm_medium'] ?? '';
   $greeting = $_COOKIE['greeting'] ?? 'vx';
   $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
-
+  $sumber = ($greeting == 'v0') ? 'WA2' : $greeting;
   // Kirim ke Telegram hanya kalau greeting bukan 'v0' - modif by mas toro tanpa cek ai langsung kirim telegram
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
-  if ($greeting !== 'v0') {
-    $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
-      . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
-      . "Greeting: <b>{$greeting}</b>\n";
+  // if ($greeting !== 'v0') {
+  $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
+    . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
+    . "Greeting: <b>{$greeting}</b>\n"
+    . "Sumber: <b>{$sumber}</b>\n";
 
-    $chatIds = [
-      // '184441126', //contoh: hp cs
-      // '785329499', //contoh: telegram aditya k
-      '-944668693'   // contoh: grup
-    ];
+  $chatIds = [
+    // '184441126', //contoh: hp cs
+    // '785329499', //contoh: telegram aditya k
+    '-944668693'   // contoh: grup
+  ];
 
-    // sementara mematikan bot telegram
-    $pesan = kirim_telegram($messageText, $chatIds);
-    // $pesan = 'Pesan berhasil dikirim!';
-  }
+  // sementara mematikan bot telegram
+  $pesan = kirim_telegram($messageText, $chatIds);
+  // $pesan = 'Pesan berhasil dikirim!';
+  // }
 
   // Validasi AI terhadap jenis website
   $ai_result = validasi_jenis_web($jenis_website);
