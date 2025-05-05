@@ -7,6 +7,105 @@
  * @param array $chatIds Daftar chat_id tujuan.
  * @return string Status pengiriman ('sukses' atau pesan error)
  */
+
+function get_ads_logic()
+{
+  if (
+    !is_admin() && (
+      isset($_COOKIE['greeting']) ||
+      isset($_GET['gclid']) ||
+      (isset($_GET['utm_source']) && $_GET['utm_source'] == 'google' &&  isset($_GET['utm_medium'])) ||
+      (isset($_GET['utm_source']) && $_GET['utm_source'] == 'google' &&  isset($_GET['utm_content']))
+    )
+  ) {
+    return true;
+  }
+}
+
+function save_utm_cookies()
+{
+
+  // Pastikan berjalan di frontend dan parameter utama ada
+  if (get_ads_logic()) {
+    // Konfigurasi cookie
+    $expiration = time() + 30 * DAY_IN_SECONDS; // 30 hari
+    $path = '/';
+    $domain = parse_url(get_site_url(), PHP_URL_HOST); // Ambil domain dari site URL
+    $secure = is_ssl(); // Aktifkan secure flag jika HTTPS
+    $httponly = true; // Cegah akses JavaScript
+
+    setcookie('traffic', 'ads', [
+      'expires' => $expiration,
+      'path' => $path,
+      'domain' => $domain,
+      'secure' => $secure,
+      'httponly' => $httponly,
+      'samesite' => 'Lax'
+    ]);
+
+    // Sanitasi nilai parameter
+    $utm_medium = sanitize_text_field($_GET['utm_medium']);
+    $utm_content = sanitize_text_field($_GET['utm_content']);
+
+    // Ekstrak angka dari utm_medium menggunakan regex
+    $utm_medium = trim($utm_medium);
+    if (preg_match('/kwd-(\d+)/', $utm_medium, $matches)) {
+      $utm_medium = $matches[1];
+    } else {
+      $utm_medium = preg_replace('/[^0-9]/', '', $utm_medium);
+    }
+
+    // Query database untuk mencocokkan utm_content dan nomor kata kunci
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'greeting_ads_data';
+
+    $query = $wpdb->prepare(
+      "SELECT greeting FROM $table_name WHERE id_grup_iklan = '%s' AND nomor_kata_kunci = '%d'",
+      $utm_content,
+      $utm_medium
+    );
+
+    $result = $wpdb->get_var($query);
+    // echo '<pre>' . print_r($result, true) . '</pre>';
+
+    // Jika ada hasil yang cocok, simpan kolom greeting ke cookie
+    if ($result) {
+      $greeting = sanitize_text_field($result);
+
+      // set utm_content ke cookie
+      setcookie('utm_content', $utm_content, [
+        'expires' => $expiration,
+        'path' => $path,
+        'domain' => $domain,
+        'secure' => $secure,
+        'httponly' => $httponly,
+        'samesite' => 'Lax'
+      ]);
+
+      // set utm_medium ke cookie
+      setcookie('utm_medium', $utm_medium, [
+        'expires' => $expiration,
+        'path' => $path,
+        'domain' => $domain,
+        'secure' => $secure,
+        'httponly' => $httponly,
+        'samesite' => 'Lax'
+      ]);
+
+      // Set cookie greeting
+      setcookie('greeting', $greeting, [
+        'expires' => $expiration,
+        'path' => $path,
+        'domain' => $domain,
+        'secure' => $secure,
+        'httponly' => $httponly,
+        'samesite' => 'Lax'
+      ]);
+    }
+  }
+}
+add_action('init', 'save_utm_cookies');
+
 function kirim_telegram($message, array $chatIds)
 {
   if (empty($chatIds)) {

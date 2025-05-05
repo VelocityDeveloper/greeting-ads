@@ -71,7 +71,7 @@ function rekap_chat_form()
   if ($greeting !== 'v0') {
 
     // cek ai status
-    $statusText = "<b>Status:</b>\n";
+    $statusText = "";
 
     if ($ai_result == 'ngawur') {
       $statusText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
@@ -80,14 +80,12 @@ function rekap_chat_form()
       $statusText .= "<b style='font-weight: bold;'>⚠️ Gagal WA</b>\n";
     }
 
-
     $chatIds = [
       // '184441126', //contoh: hp cs
       // '785329499', //contoh: telegram aditya k
       '-944668693'   // contoh: grup
     ];
 
-    // sementara mematikan bot telegram
     $pesan = kirim_telegram($statusText, $chatIds);
     // $pesan = 'Pesan berhasil dikirim!';
   }
