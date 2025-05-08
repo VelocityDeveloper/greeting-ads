@@ -17,12 +17,13 @@ function rekap_chat_form()
   $utm_medium = $_COOKIE['utm_medium'] ?? '';
   $greeting = $_COOKIE['greeting'] ?? 'vx';
   $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
-  $sumber = ($greeting == 'v0') ? 'WA2' : $greeting;
+  $sumber = ($greeting == 'v0') ? 'WA2' : 'WA ADS';
   // Kirim ke Telegram hanya kalau greeting bukan 'v0' - modif by mas toro tanpa cek ai langsung kirim telegram
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
   // if ($greeting !== 'v0') {
   $messageText = "Ada Chat Baru dari: <b>{$nama}</b>\n"
     . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
+    . "Jenis Web: <b>{$jenis_website}</b>\n"
     . "Greeting: <b>{$greeting}</b>\n"
     . "Sumber: <b>{$sumber}</b>\n";
 
@@ -69,7 +70,7 @@ function rekap_chat_form()
 
   // Kirim ke Telegram hanya kalau greeting bukan 'v0' - modif by mas toro setelah cek ai hanya kirim STATUSNYA AJA ke telegram
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
-  if ($greeting !== 'v0') {
+  //if ($greeting !== 'v0') {
 
     // cek ai status
     $statusText = "";
@@ -89,7 +90,7 @@ function rekap_chat_form()
 
     $pesan = kirim_telegram($statusText, $chatIds);
     // $pesan = 'Pesan berhasil dikirim!';
-  }
+  //}
 
 
   // Balikan response Ajax

@@ -27,7 +27,7 @@ function tampilan_baru()
       font-family: sans-serif;
       font-size: 20px;
       font-weight: 600;
-      padding: 16px 24px;
+      padding: 10px 24px;
       border-radius: 40px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
       cursor: pointer;
@@ -137,7 +137,7 @@ function tampilan_baru()
       display: none;
       align-items: center;
       justify-content: center;
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: rgba(0, 0, 0, 0.9);
       z-index: 9999;
       padding: 0 16px;
       overflow: visible;
@@ -298,7 +298,7 @@ function tampilan_baru()
       top: -20px;
       left: 50%;
       transform: translateX(-50%);
-      background-color: black;
+      background-color: grey;
       color: white;
       font-size: 32px;
       width: 40px;
