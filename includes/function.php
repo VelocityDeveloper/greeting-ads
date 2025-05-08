@@ -106,6 +106,40 @@ function save_utm_cookies()
 }
 add_action('init', 'save_utm_cookies');
 
+
+function check_greeting_langsung()
+{
+  // Sanitasi nilai parameter
+  $utm_medium = sanitize_text_field($_GET['utm_medium']);
+  $utm_content = sanitize_text_field($_GET['utm_content']);
+
+  // Ekstrak angka dari utm_medium menggunakan regex
+  $utm_medium = trim($utm_medium);
+  if (preg_match('/kwd-(\d+)/', $utm_medium, $matches)) {
+    $utm_medium = $matches[1];
+  } else {
+    $utm_medium = preg_replace('/[^0-9]/', '', $utm_medium);
+  }
+
+  // Query database untuk mencocokkan utm_content dan nomor kata kunci
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'greeting_ads_data';
+
+  $query = $wpdb->prepare(
+    "SELECT greeting FROM $table_name WHERE id_grup_iklan = '%s' AND nomor_kata_kunci = '%d'",
+    $utm_content,
+    $utm_medium
+  );
+
+  $result = $wpdb->get_var($query);
+  // echo '<pre>' . print_r($result, true) . '</pre>';
+
+  // Jika ada hasil yang cocok, simpan kolom greeting ke cookie
+  if ($result) {
+    $greeting = sanitize_text_field($result);
+    return $greeting;
+  }
+}
 function kirim_telegram($message, array $chatIds)
 {
   if (empty($chatIds)) {

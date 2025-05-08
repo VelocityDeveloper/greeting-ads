@@ -17,7 +17,10 @@ function chat_form_new($atts)
 
   $kondisi_gtag = ($nowhatsapp == $wa_ads) ? 'wa_ads' : 'wa_organik';
 
-  $c_greeting = $_COOKIE['greeting'] ?? 'vx';
+  $greeting_check = check_greeting_langsung();
+  $greeting_cookie = $_COOKIE['greeting'] ?? 'vx';
+  $c_greeting = $greeting_check ?? $greeting_cookie;
+  // $c_greeting = ($_COOKIE['greeting'] || $greeting_check) ?? 'vx';
   $c_greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $c_greeting : 'v0';
   $default_greeting = 'Hallo, Saya tertarik buat website jeniswebsite [' . $c_greeting . ']. Mohon infonya.';
 
