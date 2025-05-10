@@ -6,7 +6,7 @@ function chat_form_new($atts)
   ], $atts, 'chat-form-new');
 
   ob_start();
-  $wa_ads = '6282136302531';
+  $wa_ads = '6285729319861';
   $wa_organik = '6285701216057';
 
   $telp_ads = '082136302531';
