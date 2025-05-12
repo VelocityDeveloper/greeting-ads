@@ -192,7 +192,9 @@ function kirim_telegram($message, array $chatIds)
 function validasi_jenis_web($input)
 {
   $apiKey = get_option('openai_api_key');
-  $prompt = get_option('prompt_jenis_web');
+  //skrip asli>> $prompt = get_option('prompt_jenis_web');
+  // skrip toro>>
+  $prompt = stripslashes(get_option('prompt_jenis_web'));
 
   if (empty($apiKey) || empty($prompt)) {
     return 'unknown'; // fallback kalau setting kosong
