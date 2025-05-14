@@ -15,6 +15,7 @@ function rekap_chat_form()
   // Ambil data tambahan dari cookie
   $utm_content = $_COOKIE['utm_content'] ?? '';
   $utm_medium = $_COOKIE['utm_medium'] ?? '';
+  $gclid = $_COOKIE['_gcl_aw'] ?? '';
   $greeting = $_COOKIE['greeting'] ?? 'vx';
   $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
   $sumber = ($greeting == 'v0') ? 'WA2' : 'WA ADS';
@@ -25,7 +26,8 @@ function rekap_chat_form()
     . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
     . "Jenis Web: <b>{$jenis_website}</b>\n"
     . "Greeting: <b>{$greeting}</b>\n"
-    . "Sumber: <b>{$sumber}</b>\n";
+    . "Sumber: <b>{$sumber}</b>\n\n"
+    . "gclid: <b>{$gclid}</b>\n";
 
   $chatIds = [
     // '184441126', //contoh: hp cs
