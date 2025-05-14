@@ -14,7 +14,7 @@ function get_ads_logic()
     !is_admin() && (
       isset($_COOKIE['_glc_aw']) ||
       isset($_COOKIE['greeting']) ||
-      isset($_GET['gclid']) || isset($_COOKIE['gclid']) ||
+      isset($_GET['gclid']) ||
       (isset($_GET['utm_source']) && $_GET['utm_source'] == 'google' &&  isset($_GET['utm_medium'])) ||
       (isset($_GET['utm_source']) && $_GET['utm_source'] == 'google' &&  isset($_GET['utm_content']))
     )
