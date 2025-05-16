@@ -12,7 +12,7 @@ function get_ads_logic()
 {
   if (
     !is_admin() && (
-      isset($_COOKIE['_glc_aw']) ||
+      isset($_COOKIE['_gcl_aw']) ||
       isset($_COOKIE['greeting']) ||
       isset($_GET['gclid']) ||
       (isset($_GET['utm_source']) && $_GET['utm_source'] == 'google' &&  isset($_GET['utm_medium'])) ||
