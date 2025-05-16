@@ -74,24 +74,24 @@ function rekap_chat_form()
   $pesan = 'Greeting kosong, pesan tidak dikirim.';
   //if ($greeting !== 'v0') {
 
-    // cek ai status
-    $statusText = "";
+  // cek ai status
+  $statusText = "";
 
-    if ($ai_result == 'ngawur') {
-      $statusText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
-    }
-    if ($ai_result == 'dilarang') {
-      $statusText .= "<b style='font-weight: bold;'>⚠️ Gagal WA</b>\n";
-    }
+  if ($ai_result == 'ngawur') {
+    $statusText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
+  }
+  if ($ai_result == 'dilarang') {
+    $statusText .= "<b style='font-weight: bold;'>⚠️ Gagal WA</b>\n";
+  }
 
-    $chatIds = [
-      // '184441126', //contoh: hp cs
-      // '785329499', //contoh: telegram aditya k
-      '-944668693'   // contoh: grup
-    ];
+  $chatIds = [
+    // '184441126', //contoh: hp cs
+    // '785329499', //contoh: telegram aditya k
+    '-944668693'   // contoh: grup
+  ];
 
-    $pesan = kirim_telegram($statusText, $chatIds);
-    // $pesan = 'Pesan berhasil dikirim!';
+  $pesan = kirim_telegram($statusText, $chatIds);
+  // $pesan = 'Pesan berhasil dikirim!';
   //}
 
 
@@ -102,4 +102,53 @@ function rekap_chat_form()
     'pesan' => $pesan
 
   ]);
+}
+
+add_action('wp_ajax_cek_jenis_website_ai', 'cek_jenis_website_ai_handler');
+function cek_jenis_website_ai_handler()
+{
+  check_ajax_referer('cek_jenis_website_ai_nonce');
+
+  global $wpdb;
+  $table = $wpdb->prefix . 'rekap_form';
+
+  $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : [];
+
+  if (empty($ids)) {
+    wp_send_json_error('Tidak ada ID yang dikirim.');
+    return;
+  }
+
+  $results = $wpdb->get_results("SELECT id, jenis_website FROM $table WHERE id IN (" . implode(',', $ids) . ")");
+
+  if (!$results) {
+    wp_send_json_error('Data tidak ditemukan.');
+    return;
+  }
+  $apiKey = get_option('openai_api_key');
+  $customPrompt = get_option('prompt_jenis_web') . 'Input: {{INPUT}}';
+
+  $responses = [];
+
+  foreach ($results as $row) {
+    $input = trim($row->jenis_website);
+
+    $gptReply = validasi_jenis_web($input);
+
+    // Update kolom ai_result
+    $wpdb->update($table, ['ai_result' => $gptReply], ['id' => $row->id]);
+
+    $statusLabel = match ($gptReply) {
+      'valid'    => '✅',
+      'ngawur'   => '❌',
+      'dilarang' => '⚠️',
+      default    => '',
+    };
+    $responses[] = "ID {$row->id}: <strong>{$statusLabel}</strong> ({$input})";
+
+    // curl_close($ch);
+  }
+
+  echo '<div class="updated"><ul><li>' . implode('</li><li>', $responses) . '</li></ul></div>';
+  wp_die();
 }
