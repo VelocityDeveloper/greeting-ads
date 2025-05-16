@@ -209,7 +209,7 @@ function validasi_jenis_web($input)
     ],
     'temperature' => 0,
     'top_p' => 1,
-    'max_tokens' => 10,
+    'max_tokens' => 2048,
     'presence_penalty' => 0,
     'frequency_penalty' => 0
   ];

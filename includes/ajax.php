@@ -125,8 +125,6 @@ function cek_jenis_website_ai_handler()
     wp_send_json_error('Data tidak ditemukan.');
     return;
   }
-  $apiKey = get_option('openai_api_key');
-  $customPrompt = get_option('prompt_jenis_web') . 'Input: {{INPUT}}';
 
   $responses = [];
 
