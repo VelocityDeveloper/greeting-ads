@@ -188,7 +188,7 @@ function kirim_telegram($message, array $chatIds)
  * Melakukan validasi jenis website menggunakan OpenAI GPT API.
  *
  * @param string $input Deskripsi jenis website.
- * @return string 'valid', 'ngawur', atau 'unknown' tergantung hasil analisis GPT.
+ * @return string 'valid' atau 'dilarang' tergantung hasil analisis GPT.
  */
 function validasi_jenis_web($input)
 {
@@ -234,7 +234,7 @@ function validasi_jenis_web($input)
 
   $gptReply = strtolower(trim($result['choices'][0]['message']['content'] ?? ''));
 
-  return in_array($gptReply, ['valid', 'ngawur', 'dilarang']) ? $gptReply : 'unknown';
+  return in_array($gptReply, ['valid', 'dilarang']) ? $gptReply : 'unknown';
 }
 
 // validasi nomor wa
@@ -242,15 +242,15 @@ function validasi_no_wa($no_wa)
 {
   // harus diawali dengan 62 atau 08
   if (substr($no_wa, 0, 2) !== '62' && substr($no_wa, 0, 2) !== '08') {
-    return 'ngawur';
+    return 'invalid';
   }
   // cek panjang nomor antara 10 sampai 13
   if (strlen($no_wa) < 10 || strlen($no_wa) > 13) {
-    return 'ngawur';
+    return 'invalid';
   }
   // cek apakah hanya angka
   if (!is_numeric($no_wa)) {
-    return 'ngawur';
+    return 'invalid';
   }
   return 'valid';
 }

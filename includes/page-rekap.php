@@ -313,8 +313,6 @@ function format_ai_result($status)
     return '<span class="ai-status valid" style="color:green;">✅</span>';
   } elseif ($status === 'dilarang') {
     return '<span class="ai-status dilarang" style="color:red;">⚠️</span>';
-  } elseif ($status === 'ngawur') {
-    return '<span class="ai-status ngawur" style="color:red;">❌</span>';
   } elseif ($status) {
     return '<span class="ai-status unknown" style="color:gray;">❓</span>';
   }

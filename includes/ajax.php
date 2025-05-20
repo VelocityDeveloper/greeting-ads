@@ -77,9 +77,6 @@ function rekap_chat_form()
   // cek ai status
   $statusText = "";
 
-  if ($ai_result == 'ngawur') {
-    $statusText .= "<b style='font-weight: bold;'>❌ Gagal WA</b>\n";
-  }
   if ($ai_result == 'dilarang') {
     $statusText .= "<b style='font-weight: bold;'>⚠️ Gagal WA</b>\n";
   }
@@ -138,7 +135,6 @@ function cek_jenis_website_ai_handler()
 
     $statusLabel = match ($gptReply) {
       'valid'    => '✅',
-      'ngawur'   => '❌',
       'dilarang' => '⚠️',
       default    => '',
     };
