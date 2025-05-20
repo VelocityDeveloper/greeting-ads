@@ -134,7 +134,7 @@ function chat_form_new($atts)
           $("#info-new").text("");
         }
 
-        if (valid) {
+        if (valid && getCookie("dilarang") !== "true") {
           $(".button-green")
             .removeClass("disable")
             .addClass("enable")
@@ -183,9 +183,12 @@ function chat_form_new($atts)
               if (response.data.ai_result === 'dilarang') {
                 // jika dilarang simpan di cookie kalau user ini terlarang
                 if (getCookie("dilarang") == null) {
-                  setCookie("dilarang", "true", 1);
+                  setCookie("dilarang", "true", 30);
                 }
-
+                $(".button-green")
+                  .removeClass("enable")
+                  .addClass("disable")
+                  .prop("disabled", true);
                 $("#info-new").text("Data tidak valid.").css("color", "red");
               } else if (response.data.ai_result === 'valid') {
                 $("#form-chat-new").trigger("reset");
