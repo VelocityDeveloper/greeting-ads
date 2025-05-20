@@ -143,8 +143,6 @@ function cek_jenis_website_ai_handler()
       default    => '',
     };
     $responses[] = "ID {$row->id}: <strong>{$statusLabel}</strong> ({$input})";
-
-    // curl_close($ch);
   }
 
   echo '<div class="updated"><ul><li>' . implode('</li><li>', $responses) . '</li></ul></div>';

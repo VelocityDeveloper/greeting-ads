@@ -21,6 +21,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/function.php';
 require_once plugin_dir_path(__FILE__) . 'includes/ajax.php';
 require_once plugin_dir_path(__FILE__) . 'includes/form-chat.php';
 require_once plugin_dir_path(__FILE__) . 'includes/floating-whatsapp.php';
+require_once plugin_dir_path(__FILE__) . 'includes/page-rekap.php';
 
 // Hook untuk menambahkan menu admin
 add_action('admin_menu', 'greeting_ads_add_menu');

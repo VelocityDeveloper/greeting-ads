@@ -10,7 +10,7 @@ function chat_form_new($atts)
   $wa_organik = '6285701216057';
 
   $telp_ads = '082136302531';
-  $telp_organik = '085701216057'; //sekarang web vd.com tidak pakai telp
+  $telp_organik = '085701216057';
 
   $nowhatsapp = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $wa_ads : $wa_organik;
   $notelp = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $telp_ads : $telp_organik;
