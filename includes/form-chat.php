@@ -45,11 +45,11 @@ function chat_form_new($atts)
 
     <div class="pertanyaan">
       <div class="pertanyaan-text">
-        Website apa yang akan dibuat?
+<!--        Website apa yang akan dibuat? -->
       </div>
       <div class="jawaban">
         <label class="website-input">
-          <textarea rows="2" min="10" class="input-control" id="jenis-website-new" placeholder="Misal: web bisnis kopi, web portal berita, web perusahaan ekspedisi, dll" required></textarea>
+          <textarea rows="2 min="10" class="input-control" id="jenis-website-new" placeholder="Boleh tahu, rencananya ingin membuat website untuk keperluan apa, ya?" required></textarea>
           <span class="info" id="info-website-new"></span>
           <div class="info-new" id="info-new"></div>
         </label>
