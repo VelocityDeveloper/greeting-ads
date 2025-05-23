@@ -17,6 +17,7 @@ function velocity_add_admin_page()
 // READ + FORM + CREATE + UPDATE + DELETE HANDLING
 function velocity_render_admin_page()
 {
+	date_default_timezone_set('Asia/Jakarta');
   global $wpdb;
   $table_name = $wpdb->prefix . 'rekap_form';
 
@@ -79,6 +80,90 @@ function velocity_render_admin_page()
   ));
 ?>
   <div class="wrap">
+
+
+<!-- ===================== AWAL GREETING POPULER & TELEGRAM NOTIF - TORO ======================= -->
+<?php
+$popular_greetings = $wpdb->get_results("
+    SELECT greeting, DATE(created_at) AS tanggal, COUNT(*) AS total
+    FROM {$table_name}
+    WHERE greeting != 'v0' AND (
+        DATE(created_at) = CURDATE() OR DATE(created_at) = CURDATE() - INTERVAL 1 DAY
+    )
+    GROUP BY greeting, DATE(created_at)
+    HAVING total >= 3
+    ORDER BY tanggal DESC, total DESC
+");
+
+$grouped = ['today' => [], 'yesterday' => []];
+$today = date('Y-m-d');
+$yesterday = date('Y-m-d', strtotime('-1 day'));
+
+// Telegram setup
+$bot_token = '7682286832:AAF_q3C1C7d42DHy0bXZcgCZzNEGcDDia2Q';
+$chat_id = '260162734';
+
+foreach ($popular_greetings as $row) {
+    $item = "✅ <strong>{$row->greeting}</strong> ({$row->total}x)";
+
+    // Kelompokkan tampilan
+    if ($row->tanggal == $today) {
+        $grouped['today'][] = $item;
+    } elseif ($row->tanggal == $yesterday) {
+        $grouped['yesterday'][] = $item;
+    }
+
+    // Kirim notifikasi jika greeting hari ini minimal 3x dan kelipatan 3 barunya belum dikirim
+if ($row->tanggal == $today && $row->total >= 3) {
+    $step = floor($row->total / 3) * 3;
+    $transient_key = 'sent_greeting_' . $row->greeting . '_' . $step . '_' . $today;
+
+    if (!get_transient($transient_key)) {
+        $pesan = "⚠️ Greeting <b>{$row->greeting}</b> sudah muncul {$row->total}x hari ini.";
+        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+
+        wp_remote_post($url, [
+            'body' => [
+                'chat_id' => $chat_id,
+                'text' => $pesan,
+                'parse_mode' => 'HTML',
+                'disable_web_page_preview' => 'true'
+            ]
+        ]);
+
+        set_transient($transient_key, true, DAY_IN_SECONDS);
+    }
+}
+
+}
+?>
+<?php if (!empty($grouped['today']) || !empty($grouped['yesterday'])): ?>
+  <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-left: 5px solid #0073aa;">
+    <details open>
+      <summary style="font-weight: bold; font-size: 16px;">📊 Greeting Populer (≥ 3x)</summary>
+      <?php if (!empty($grouped['today'])): ?>
+        <p><strong>Hari Ini:</strong></p>
+        <ul>
+          <?php foreach ($grouped['today'] as $g): ?>
+            <li><?= $g ?></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+      <?php if (!empty($grouped['yesterday'])): ?>
+        <p><strong>Kemarin:</strong></p>
+        <ul>
+          <?php foreach ($grouped['yesterday'] as $g): ?>
+            <li><?= $g ?></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </details>
+  </div>
+<?php endif; ?>
+<!-- ===================== AKHIR GREETING POPULER & TELEGRAM NOTIF - TORO ======================= -->
+
+
+
     <?php if ($edit_data): ?>
       <script>
         document.addEventListener("DOMContentLoaded", function() {
