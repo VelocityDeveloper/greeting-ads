@@ -224,6 +224,11 @@ function chat_form_new($atts)
               setTimeout(function() {
                 $("#info-new").text("");
               }, 30000);
+            } else {
+              $(".button-green")
+                .removeClass("disable")
+                .addClass("enable")
+                .prop("disabled", false);
             }
 
             $(".frame-btn button").html(
