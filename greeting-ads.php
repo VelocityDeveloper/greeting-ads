@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Greeting Ads
  * Description: Plugin untuk mengimpor dan mengelola data CSV dengan fitur CRUD.
- * Version: 1.0
+ * Version: 1.1.0
  * Author: Velocity Developer
  */
 
