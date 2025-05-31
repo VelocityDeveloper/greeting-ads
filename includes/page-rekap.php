@@ -403,3 +403,45 @@ function format_ai_result($status)
   }
   return '';
 }
+
+//fungsi greeting dan kirim telegram - mas TORO
+function cek_dan_kirim_greeting_populer($greeting, $tanggal = null) {
+    global $wpdb;
+
+    if ($greeting === 'v0' || empty($greeting)) return;
+
+    if (!$tanggal) {
+        $tanggal = date('Y-m-d');
+    }
+
+    $table_name = $wpdb->prefix . 'rekap_form';
+
+    // Hitung jumlah greeting hari ini (kecuali v0)
+    $jumlah = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*) FROM $table_name 
+        WHERE greeting = %s AND DATE(created_at) = %s
+    ", $greeting, $tanggal));
+
+    if ($jumlah >= 3) {
+        $step = floor($jumlah / 3) * 3;
+        $transient_key = 'sent_greeting_' . $greeting . '_' . $step . '_' . $tanggal;
+
+        if (!get_transient($transient_key)) {
+            $bot_token = '7682286832:AAF_q3C1C7d42DHy0bXZcgCZzNEGcDDia2Q';
+            $chat_id = '260162734';
+            $pesan = "⚠️ Greeting <b>{$greeting}</b> sudah muncul {$jumlah}x hari ini.";
+            $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+
+            wp_remote_post($url, [
+                'body' => [
+                    'chat_id' => $chat_id,
+                    'text' => $pesan,
+                    'parse_mode' => 'HTML',
+                    'disable_web_page_preview' => 'true'
+                ]
+            ]);
+
+            set_transient($transient_key, true, DAY_IN_SECONDS);
+        }
+    }
+}
