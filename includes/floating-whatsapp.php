@@ -411,7 +411,7 @@ function tampilan_baru()
 }
 function whatsapp_floating()
 {
-  if (wp_is_mobile() && !is_page('form-chat')) {
+  if (wp_is_mobile() && !is_page('form-chat') && !is_page('order')) {
     echo tampilan_baru();
   }
 }
