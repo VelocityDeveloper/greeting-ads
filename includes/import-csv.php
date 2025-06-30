@@ -13,16 +13,21 @@ function greeting_ads_import_csv()
     fgetcsv($handle);
 
     while (($data = fgetcsv($handle, 1000, ',')) !== false) {
-      $wpdb->insert(
-        $table_name,
-        array(
-          'kata_kunci' => sanitize_text_field($data[0]),
-          'grup_iklan' => sanitize_text_field($data[1]),
-          'id_grup_iklan' => sanitize_text_field($data[2]),
-          'nomor_kata_kunci' => sanitize_text_field($data[3]),
-          'greeting' => sanitize_text_field($data[4]),
-        )
-      );
+      // Periksa apakah greeting sudah ada di database
+      $existing_greeting = $wpdb->get_var("SELECT greeting FROM $table_name WHERE greeting = '" . sanitize_text_field($data[4]) . "'");
+      if (empty($existing_greeting)) {
+        // Jika greeting belum ada, insert data
+        $wpdb->insert(
+          $table_name,
+          array(
+            'kata_kunci' => sanitize_text_field($data[0]),
+            'grup_iklan' => sanitize_text_field($data[1]),
+            'id_grup_iklan' => sanitize_text_field($data[2]),
+            'nomor_kata_kunci' => sanitize_text_field($data[3]),
+            'greeting' => sanitize_text_field($data[4]),
+          )
+        );
+      }
     }
 
     fclose($handle);
