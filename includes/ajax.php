@@ -59,9 +59,6 @@ function rekap_chat_form()
       'created_at' => current_time('mysql'),
     ]
   );
-  
-  // Setelah insert, langsung cek greeting - mas toro
-	cek_dan_kirim_greeting_populer($greeting);
 	
   // kirim log ke telegram jika ada mysql error
   if ($wpdb->last_error) {
