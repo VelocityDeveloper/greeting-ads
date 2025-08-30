@@ -13,6 +13,18 @@ function register_greeting_api()
     'callback' => 'get_greeting',
     'permission_callback' => 'validate_greeting_token'
   ]);
+  
+  register_rest_route('greeting/v1', '/all', [
+    'methods' => 'GET',
+    'callback' => 'get_all_greeting_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
+  
+  register_rest_route('greeting/v1', '/sync', [
+    'methods' => 'GET',
+    'callback' => 'get_sync_greeting_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -47,4 +59,244 @@ function get_greeting()
   $table_name = $wpdb->prefix . 'greeting_ads_data';
   $data = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
   return rest_ensure_response($data);
+}
+
+function get_all_greeting_data($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
+  
+  // Base query
+  $query = "SELECT * FROM $table_name WHERE 1=1";
+  $query_params = [];
+  
+  // Filter parameters
+  $kata_kunci = $request->get_param('kata_kunci');
+  $grup_iklan = $request->get_param('grup_iklan');
+  $id_grup_iklan = $request->get_param('id_grup_iklan');
+  $nomor_kata_kunci = $request->get_param('nomor_kata_kunci');
+  $greeting = $request->get_param('greeting');
+  
+  // Pagination parameters
+  $page = max(1, (int)$request->get_param('page'));
+  $per_page = min(100, max(1, (int)$request->get_param('per_page') ?: 50));
+  $offset = ($page - 1) * $per_page;
+  
+  // Search parameter
+  $search = $request->get_param('search');
+  
+  // Build WHERE conditions
+  if (!empty($kata_kunci)) {
+    $query .= " AND kata_kunci LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($kata_kunci) . '%';
+  }
+  
+  if (!empty($grup_iklan)) {
+    $query .= " AND grup_iklan LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($grup_iklan) . '%';
+  }
+  
+  if (!empty($id_grup_iklan)) {
+    $query .= " AND id_grup_iklan = %s";
+    $query_params[] = $id_grup_iklan;
+  }
+  
+  if (!empty($nomor_kata_kunci)) {
+    $query .= " AND nomor_kata_kunci = %s";
+    $query_params[] = $nomor_kata_kunci;
+  }
+  
+  if (!empty($greeting)) {
+    $query .= " AND greeting LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($greeting) . '%';
+  }
+  
+  // Global search across all text fields
+  if (!empty($search)) {
+    $query .= " AND (kata_kunci LIKE %s OR grup_iklan LIKE %s OR id_grup_iklan LIKE %s OR nomor_kata_kunci LIKE %s OR greeting LIKE %s)";
+    $search_term = '%' . $wpdb->esc_like($search) . '%';
+    $query_params = array_merge($query_params, [$search_term, $search_term, $search_term, $search_term, $search_term]);
+  }
+  
+  // Count total records for pagination
+  $count_query = str_replace("SELECT *", "SELECT COUNT(*)", $query);
+  $total_items = 0;
+  if (!empty($query_params)) {
+    $total_items = $wpdb->get_var($wpdb->prepare($count_query, $query_params));
+  } else {
+    $total_items = $wpdb->get_var($count_query);
+  }
+  
+  // Add ORDER BY and LIMIT
+  $query .= " ORDER BY id DESC LIMIT %d OFFSET %d";
+  $query_params[] = $per_page;
+  $query_params[] = $offset;
+  
+  // Execute main query
+  if (!empty($query_params)) {
+    $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+  } else {
+    $data = $wpdb->get_results($query, ARRAY_A);
+  }
+  
+  // Prepare response with pagination info
+  $response_data = [
+    'data' => $data,
+    'pagination' => [
+      'total_items' => (int)$total_items,
+      'total_pages' => ceil($total_items / $per_page),
+      'current_page' => $page,
+      'per_page' => $per_page
+    ]
+  ];
+  
+  return rest_ensure_response($response_data);
+}
+
+function get_sync_greeting_data($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
+  
+  // Format parameter - json, csv, xml (default: json)
+  $format = $request->get_param('format') ?: 'json';
+  
+  // Limit parameter untuk mencegah overload (default: no limit, max: 10000)
+  $limit = $request->get_param('limit');
+  if ($limit && $limit > 10000) {
+    $limit = 10000;
+  }
+  
+  // Base query
+  $query = "SELECT * FROM $table_name WHERE 1=1";
+  $query_params = [];
+  
+  // Filter berdasarkan ID range untuk chunked sync
+  $id_from = $request->get_param('id_from');
+  $id_to = $request->get_param('id_to');
+  
+  if ($id_from) {
+    $query .= " AND id >= %d";
+    $query_params[] = (int)$id_from;
+  }
+  
+  if ($id_to) {
+    $query .= " AND id <= %d";
+    $query_params[] = (int)$id_to;
+  }
+  
+  // Order by ID untuk konsistensi
+  $query .= " ORDER BY id ASC";
+  
+  // Add limit if specified
+  if ($limit) {
+    $query .= " LIMIT %d";
+    $query_params[] = (int)$limit;
+  }
+  
+  // Execute query
+  if (!empty($query_params)) {
+    $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+  } else {
+    $data = $wpdb->get_results($query, ARRAY_A);
+  }
+  
+  // Get total count
+  $count_query = "SELECT COUNT(*) FROM $table_name WHERE 1=1";
+  $count_params = [];
+  
+  if ($id_from) {
+    $count_query .= " AND id >= %d";
+    $count_params[] = (int)$id_from;
+  }
+  
+  if ($id_to) {
+    $count_query .= " AND id <= %d";
+    $count_params[] = (int)$id_to;
+  }
+  
+  if (!empty($count_params)) {
+    $total_records = $wpdb->get_var($wpdb->prepare($count_query, $count_params));
+  } else {
+    $total_records = $wpdb->get_var($count_query);
+  }
+  
+  $response_data = [
+    'success' => true,
+    'total_records' => (int)$total_records,
+    'returned_records' => count($data),
+    'data' => $data,
+    'sync_info' => [
+      'timestamp' => current_time('mysql'),
+      'format' => $format,
+      'id_range' => [
+        'from' => $id_from ?: 'start',
+        'to' => $id_to ?: 'end'
+      ]
+    ]
+  ];
+  
+  // Return data based on format
+  switch ($format) {
+    case 'csv':
+      return generate_csv_response($data);
+    case 'xml':
+      return generate_xml_response($response_data);
+    default:
+      return rest_ensure_response($response_data);
+  }
+}
+
+function generate_csv_response($data)
+{
+  if (empty($data)) {
+    return new WP_Error('no_data', 'No data available for CSV export', ['status' => 404]);
+  }
+  
+  $csv_output = '';
+  
+  // Header
+  $headers = array_keys($data[0]);
+  $csv_output .= implode(',', $headers) . "\n";
+  
+  // Data rows
+  foreach ($data as $row) {
+    $csv_row = [];
+    foreach ($row as $value) {
+      $csv_row[] = '"' . str_replace('"', '""', $value) . '"';
+    }
+    $csv_output .= implode(',', $csv_row) . "\n";
+  }
+  
+  $response = rest_ensure_response($csv_output);
+  $response->header('Content-Type', 'text/csv');
+  $response->header('Content-Disposition', 'attachment; filename="greeting_ads_data.csv"');
+  
+  return $response;
+}
+
+function generate_xml_response($data)
+{
+  $xml = new SimpleXMLElement('<greeting_ads_sync/>');
+  
+  $xml->addChild('success', $data['success'] ? 'true' : 'false');
+  $xml->addChild('total_records', $data['total_records']);
+  $xml->addChild('returned_records', $data['returned_records']);
+  
+  $sync_info = $xml->addChild('sync_info');
+  $sync_info->addChild('timestamp', $data['sync_info']['timestamp']);
+  $sync_info->addChild('format', $data['sync_info']['format']);
+  
+  $records = $xml->addChild('records');
+  foreach ($data['data'] as $record) {
+    $record_xml = $records->addChild('record');
+    foreach ($record as $key => $value) {
+      $record_xml->addChild($key, htmlspecialchars($value));
+    }
+  }
+  
+  $response = rest_ensure_response($xml->asXML());
+  $response->header('Content-Type', 'application/xml');
+  
+  return $response;
 }

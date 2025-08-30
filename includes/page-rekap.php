@@ -17,7 +17,7 @@ function velocity_add_admin_page()
 // READ + FORM + CREATE + UPDATE + DELETE HANDLING
 function velocity_render_admin_page()
 {
-	date_default_timezone_set('Asia/Jakarta');
+  date_default_timezone_set('Asia/Jakarta');
   global $wpdb;
   $table_name = $wpdb->prefix . 'rekap_form';
 
@@ -201,13 +201,37 @@ function velocity_render_admin_page()
     <?php if ($total_pages > 1): ?>
       <div class="tablenav bottom">
         <div class="tablenav-pages">
-          <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <?php if ($i == $current_page): ?>
-              <span class="page-numbers current" style="padding: 10px;"><?php echo $i; ?></span>
-            <?php else: ?>
-              <a class="page-numbers" style="padding: 10px;" href="?page=rekap-chat-form&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
-            <?php endif; ?>
-          <?php endfor; ?>
+          <?php
+          $display_pages = [];
+          // Always show first 5
+          for ($i = 1; $i <= min(5, $total_pages); $i++) {
+            $display_pages[] = $i;
+          }
+          // Always show last 3
+          for ($i = max($total_pages - 2, 1); $i <= $total_pages; $i++) {
+            $display_pages[] = $i;
+          }
+          // Show 2 before and after current page
+          for ($i = max($current_page - 2, 1); $i <= min($current_page + 2, $total_pages); $i++) {
+            $display_pages[] = $i;
+          }
+          $display_pages = array_unique($display_pages);
+          sort($display_pages);
+
+          $last = 0;
+          for ($idx = 0; $idx < count($display_pages); $idx++) {
+            $i = $display_pages[$idx];
+            if ($last && $i > $last + 1) {
+              echo '<span class="page-numbers dots" style="padding: 10px;">...</span>';
+            }
+            if ($i == $current_page) {
+              echo '<span class="page-numbers current" style="padding: 10px;">' . $i . '</span>';
+            } else {
+              echo '<a class="page-numbers" style="padding: 10px;" href="?page=rekap-chat-form&paged=' . $i . '">' . $i . '</a>';
+            }
+            $last = $i;
+          }
+          ?>
         </div>
       </div>
     <?php endif; ?>
