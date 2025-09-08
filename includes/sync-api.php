@@ -100,38 +100,20 @@ function greeting_ads_sync_data_callback($request) {
         ));
         
         if ($existing) {
-            // Update existing record
-            $result = $wpdb->update(
-                $table_name,
-                array(
-                    'kata_kunci' => $kataKunci,
-                    'grup_iklan' => $grupIklan,
-                    'id_grup_iklan' => $idGrupIklan,
-                    'greeting' => $greeting
-                ),
-                array('nomor_kata_kunci' => $nomorKataKunci),
-                array('%s', '%s', '%s', '%s'),
-                array('%s')
-            );
+            // Skip existing record (don't update)
+            greeting_ads_log_sync_action('skipped', $kataKunci, $greeting, $nomorKataKunci);
             
-            if ($result !== false) {
-                // Log the action
-                greeting_ads_log_sync_action('update', $kataKunci, $greeting, $nomorKataKunci);
-                
-                return new WP_REST_Response(array(
-                    'success' => true,
-                    'action' => 'updated',
-                    'message' => "Updated: {$kataKunci} → {$greeting}",
-                    'record_id' => $existing->id,
-                    'data' => array(
-                        'kata_kunci' => $kataKunci,
-                        'greeting' => $greeting,
-                        'nomor_kata_kunci' => $nomorKataKunci
-                    )
-                ), 200);
-            } else {
-                throw new Exception('Update failed: ' . $wpdb->last_error);
-            }
+            return new WP_REST_Response(array(
+                'success' => true,
+                'action' => 'skipped',
+                'message' => "Skipped (already exists): {$kataKunci} → {$greeting}",
+                'record_id' => $existing->id,
+                'data' => array(
+                    'kata_kunci' => $kataKunci,
+                    'greeting' => $greeting,
+                    'nomor_kata_kunci' => $nomorKataKunci
+                )
+            ), 200)
         } else {
             // Insert new record
             $result = $wpdb->insert(
