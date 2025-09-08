@@ -64,7 +64,7 @@ function greeting_ads_register_sync_routes() {
  */
 function greeting_ads_sync_permission_check($request) {
     $api_key = $request->get_param('api_key') ?: $request->get_header('X-API-Key');
-    $expected_key = 'hutara000'; // API key yang sama dengan apivdcom
+    $expected_key = 'hutara000'; // TODO: Move to WordPress options/config
     
     if ($api_key !== $expected_key) {
         return new WP_Error('unauthorized', 'Invalid API key', array('status' => 401));
@@ -257,6 +257,7 @@ function greeting_ads_trigger_nglorok_sync($action, $keyword, $greeting) {
     
     error_log('[Greeting Ads] Triggering nglorok webhook for: ' . $keyword . ' → ' . $greeting);
     
+    // TODO: Move to WordPress options/config
     $webhook_url = 'https://velocitydeveloper.net/webhook_sync.php';
     $api_key = 'hutara000';
     
