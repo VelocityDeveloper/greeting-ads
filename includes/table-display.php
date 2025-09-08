@@ -90,110 +90,174 @@ if (isset($_GET['edit'])) {
 <div class="wrap">
 
   <div class="card" style="max-width: 100% !important;">
-    <h2 class="title">Pencarian Greeting</h2>
-    <form id="search-form" class="form-wrap">
-      <table class="form-table">
-        <tr>
-          <th scope="row"><label for="search_id_grup_iklan">utm_content</label></th>
-          <td><input type="text" name="id_grup_iklan" id="search_id_grup_iklan" class="regular-text" required></td>
-        </tr>
-        <tr>
-          <th scope="row"><label for="search_nomor_kata_kunci">utm_medium</label></th>
-          <td><input type="text" name="nomor_kata_kunci" id="search_nomor_kata_kunci" class="regular-text" required></td>
-        </tr>
-      </table>
-      <button type="submit" class="button button-primary">Cari</button>
+    <div class="ga-search-header">
+      <h2 class="title">Pencarian Greeting</h2>
+      <p class="ga-subtitle">Temukan pesan greeting berdasarkan parameter UTM</p>
+    </div>
+    <form id="search-form" class="ga-search-form">
+      <div class="ga-search-grid">
+        <div class="ga-form-group mb-0">
+          <label for="search_id_grup_iklan" class="ga-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            utm_content
+          </label>
+          <input type="text" name="id_grup_iklan" id="search_id_grup_iklan" class="ga-input" placeholder="Masukkan ID grup iklan" required>
+        </div>
+
+        <div class="ga-form-group mb-0">
+          <label for="search_nomor_kata_kunci" class="ga-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            utm_medium
+          </label>
+          <input type="text" name="nomor_kata_kunci" id="search_nomor_kata_kunci" class="ga-input" placeholder="Masukkan nomor kata kunci" required>
+        </div>
+
+        <div class="ga-search-button-wrapper">
+          <button type="submit" class="ga-btn ga-btn-primary ga-search-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            Cari Greeting
+          </button>
+        </div>
+      </div>
     </form>
 
     <!-- Output hasil pencarian -->
-    <div id="search-result"></div>
+    <div id="search-result" class="ga-search-result"></div>
   </div>
 
-  <!-- Form impor CSV -->
-  <div class="card" style="max-width: 100% !important;">
-    <h2 class="title">Impor Data CSV</h2>
-    <form method="post" enctype="multipart/form-data" class="form-wrap">
-      <input type="file" name="csv_file" accept=".csv" required>
-      <?php submit_button('Impor', 'primary', 'import_csv'); ?>
-    </form>
-  </div>
 
-  <!-- Form tambah/edit data -->
+  <!-- Data Management Section -->
   <div class="card" style="max-width: 100% !important;">
-    <h2 class="title"><?php echo isset($_GET['edit']) ? 'Edit Data' : 'Tambah Data'; ?></h2>
-    <form method="post" class="form-wrap">
-      <input type="hidden" name="id" value="<?php echo isset($edit_data) ? esc_attr($edit_data['id']) : ''; ?>">
-      <table class="form-table">
-        <tr>
-          <th scope="row"><label for="kata_kunci">Kata Kunci</label></th>
-          <td><input type="text" name="kata_kunci" id="kata_kunci" value="<?php echo isset($edit_data) ? esc_attr($edit_data['kata_kunci']) : ''; ?>" class="regular-text" required></td>
-        </tr>
-        <tr>
-          <th scope="row"><label for="grup_iklan">Grup Iklan</label></th>
-          <td><input type="text" name="grup_iklan" id="grup_iklan" value="<?php echo isset($edit_data) ? esc_attr($edit_data['grup_iklan']) : ''; ?>" class="regular-text" required></td>
-        </tr>
-        <tr>
-          <th scope="row"><label for="id_grup_iklan">ID Grup Iklan</label></th>
-          <td><input type="text" name="id_grup_iklan" id="id_grup_iklan" value="<?php echo isset($edit_data) ? esc_attr($edit_data['id_grup_iklan']) : ''; ?>" class="regular-text" required></td>
-        </tr>
-        <tr>
-          <th scope="row"><label for="nomor_kata_kunci">Nomor Kata Kunci</label></th>
-          <td><input type="text" name="nomor_kata_kunci" id="nomor_kata_kunci" value="<?php echo isset($edit_data) ? esc_attr($edit_data['nomor_kata_kunci']) : ''; ?>" class="regular-text" required></td>
-        </tr>
-        <tr>
-          <th scope="row"><label for="greeting">Greeting</label></th>
-          <td><input type="text" name="greeting" id="greeting" value="<?php echo isset($edit_data) ? esc_attr($edit_data['greeting']) : ''; ?>" class="regular-text" required></td>
-        </tr>
-      </table>
-      <?php submit_button(isset($edit_data) ? 'Update' : 'Tambah', 'primary', isset($edit_data) ? 'update_data' : 'add_data'); ?>
-    </form>
-  </div>
-
-  <!-- Tabel data widefat -->
-  <div class="card" style="max-width: 100% !important;">
-    <h2 class="title">Data Greeting Ads</h2>
-    <form method="get" class="form-wrap" style="margin-bottom: 1rem;">
-      <input type="hidden" name="page" value="greeting-ads">
-      <input type="text" name="search_kata_kunci" placeholder="Cari Kata Kunci" value="<?php echo isset($_GET['search_kata_kunci']) ? esc_attr($_GET['search_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
-      <input type="text" name="search_nomor_kata_kunci" placeholder="Cari Nomor Kata Kunci" value="<?php echo isset($_GET['search_nomor_kata_kunci']) ? esc_attr($_GET['search_nomor_kata_kunci']) : ''; ?>" style="margin-right: 10px;">
-      <input type="text" name="search_greeting" placeholder="Cari Greeting" value="<?php echo isset($_GET['search_greeting']) ? esc_attr($_GET['search_greeting']) : ''; ?>" style="margin-right: 10px;">
-      <input type="submit" class="button" value="Filter">
-    </form>
-    <table class="wp-list-table widefat fixed striped">
+    <div class="ga-data-header">
+      <div>
+        <h2 class="title">Data Greeting Ads</h2>
+        <p class="ga-subtitle">Kelola pesan greeting dan parameter UTM Anda</p>
+      </div>
+      <div class="ga-header-actions">
+        <button id="import-csv-btn" class="ga-btn ga-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17,8 12,3 7,8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Import CSV
+        </button>
+        <button id="add-data-btn" class="ga-btn ga-btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          Tambah Data Baru
+        </button>
+      </div>
+    </div>
+    <div class="ga-filter-section">
+      <form method="get" class="ga-filter-form">
+        <input type="hidden" name="page" value="greeting-ads">
+        <div class="ga-filter-grid">
+          <div class="ga-filter-group">
+            <input type="text" name="search_kata_kunci" placeholder="Cari kata kunci..." value="<?php echo isset($_GET['search_kata_kunci']) ? esc_attr($_GET['search_kata_kunci']) : ''; ?>" class="ga-filter-input">
+          </div>
+          <div class="ga-filter-group">
+            <input type="text" name="search_nomor_kata_kunci" placeholder="Cari nomor kata kunci..." value="<?php echo isset($_GET['search_nomor_kata_kunci']) ? esc_attr($_GET['search_nomor_kata_kunci']) : ''; ?>" class="ga-filter-input">
+          </div>
+          <div class="ga-filter-group">
+            <input type="text" name="search_greeting" placeholder="Cari greeting..." value="<?php echo isset($_GET['search_greeting']) ? esc_attr($_GET['search_greeting']) : ''; ?>" class="ga-filter-input">
+          </div>
+          <div class="ga-filter-group">
+            <button type="submit" class="ga-btn ga-btn-secondary ga-filter-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"></polygon>
+              </svg>
+              Filter
+            </button>
+            <?php if (!empty(array_filter([$search_kata_kunci, $search_nomor_kata_kunci, $search_greeting]))): ?>
+              <a href="?page=greeting-ads" class="ga-btn ga-btn-ghost ga-clear-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Bersihkan
+              </a>
+            <?php endif; ?>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="ga-table-container">
+      <table class="ga-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Kata Kunci</th>
-          <th>Grup Iklan</th>
-          <th>ID Grup Iklan</th>
-          <th>Nomor Kata Kunci</th>
-          <th>Greeting</th>
-          <th>Aksi</th>
+          <th class=\"ga-th\">ID</th>
+          <th class=\"ga-th\">Kata Kunci</th>
+          <th class=\"ga-th\">Grup Iklan</th>
+          <th class=\"ga-th\">ID Grup Iklan</th>
+          <th class=\"ga-th\">Nomor Kata Kunci</th>
+          <th class=\"ga-th\">Pesan Greeting</th>
+          <th class=\"ga-th\">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php if (!empty($data)): ?>
           <?php foreach ($data as $row): ?>
-            <tr>
-              <td><?php echo esc_html($row['id']); ?></td>
-              <td><?php echo esc_html($row['kata_kunci']); ?></td>
-              <td><?php echo esc_html($row['grup_iklan']); ?></td>
-              <td><?php echo esc_html($row['id_grup_iklan']); ?></td>
-              <td><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
-              <td><?php echo esc_html($row['greeting']); ?></td>
-              <td>
-                <a href="?page=greeting-ads&edit=<?php echo esc_attr($row['id']); ?>&paged=<?php echo esc_attr($current_page); ?>&per_page=<?php echo esc_attr($per_page); ?>&search_kata_kunci=<?php echo esc_attr($search_kata_kunci); ?>&search_nomor_kata_kunci=<?php echo esc_attr($search_nomor_kata_kunci); ?>" class="button button-small">Edit</a>
-                <a href="#" class="button button-small button-danger delete-data" data-id="<?php echo esc_attr($row['id']); ?>" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
+            <tr class=\"ga-tr\">
+              <td class=\"ga-td\"><?php echo esc_html($row['id']); ?></td>
+              <td class=\"ga-td\"><?php echo esc_html($row['kata_kunci']); ?></td>
+              <td class=\"ga-td\"><?php echo esc_html($row['grup_iklan']); ?></td>
+              <td class=\"ga-td\"><?php echo esc_html($row['id_grup_iklan']); ?></td>
+              <td class=\"ga-td\"><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
+              <td class=\"ga-td ga-greeting-cell\"><?php echo esc_html($row['greeting']); ?></td>
+              <td class="ga-td ga-actions-cell">
+                <button class="ga-btn ga-btn-secondary ga-btn-sm edit-data-btn"
+                  data-id="<?php echo esc_attr($row['id']); ?>"
+                  data-kata-kunci="<?php echo esc_attr($row['kata_kunci']); ?>"
+                  data-grup-iklan="<?php echo esc_attr($row['grup_iklan']); ?>"
+                  data-id-grup-iklan="<?php echo esc_attr($row['id_grup_iklan']); ?>"
+                  data-nomor-kata-kunci="<?php echo esc_attr($row['nomor_kata_kunci']); ?>"
+                  data-greeting="<?php echo esc_attr($row['greeting']); ?>">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit
+                </button>
+                <button class="ga-btn ga-btn-danger ga-btn-sm delete-data" data-id="<?php echo esc_attr($row['id']); ?>">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  Hapus
+                </button>
               </td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
-          <tr>
-            <td colspan="7">Tidak ada data.</td>
+          <tr class=\"ga-tr\">
+            <td colspan=\"7\" class=\"ga-td ga-empty-state\">
+              <div class=\"ga-empty-content\">
+                <svg width=\"48\" height=\"48\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"ga-empty-icon\">
+                  <circle cx=\"11\" cy=\"11\" r=\"8\"></circle>
+                  <path d=\"M21 21l-4.35-4.35\"></path>
+                </svg>
+                <p>Tidak ada data ditemukan</p>
+                <p class=\"ga-empty-subtext\">Mulai dengan menambahkan data greeting atau import dari CSV</p>
+              </div>
+            </td>
           </tr>
         <?php endif; ?>
       </tbody>
     </table>
+    </div>
 
     <!-- Pagination -->
     <?php
@@ -221,6 +285,672 @@ if (isset($_GET['edit'])) {
     <?php endif; ?>
   </div>
 </div>
+
+<!-- Modern Modal for Add/Edit Data -->
+<div id="data-modal" class="ga-modal">
+  <div class="ga-modal-content">
+    <div class="ga-modal-header">
+      <h3 id="modal-title">Add New Data</h3>
+      <button class="ga-modal-close" id="modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="ga-modal-body">
+      <form id="data-form">
+        <input type="hidden" id="data-id" name="id">
+
+        <div class="ga-form-group">
+          <label for="modal-kata-kunci" class="ga-label">Kata Kunci</label>
+          <input type="text" id="modal-kata-kunci" name="kata_kunci" class="ga-input" required>
+        </div>
+
+        <div class="ga-form-group">
+          <label for="modal-grup-iklan" class="ga-label">Grup Iklan</label>
+          <input type="text" id="modal-grup-iklan" name="grup_iklan" class="ga-input" required>
+        </div>
+
+        <div class="ga-form-group">
+          <label for="modal-id-grup-iklan" class="ga-label">ID Grup Iklan</label>
+          <input type="text" id="modal-id-grup-iklan" name="id_grup_iklan" class="ga-input" required>
+        </div>
+
+        <div class="ga-form-group">
+          <label for="modal-nomor-kata-kunci" class="ga-label">Nomor Kata Kunci</label>
+          <input type="text" id="modal-nomor-kata-kunci" name="nomor_kata_kunci" class="ga-input" required>
+        </div>
+
+        <div class="ga-form-group">
+          <label for="modal-greeting" class="ga-label">Pesan Greeting</label>
+          <textarea id="modal-greeting" name="greeting" class="ga-textarea" rows="3" required></textarea>
+        </div>
+
+        <div class="ga-modal-actions">
+          <button type="button" class="ga-btn ga-btn-secondary" id="cancel-btn">Batal</button>
+          <button type="submit" class="ga-btn ga-btn-primary" id="submit-btn">
+            <span id="submit-text">Simpan</span>
+            <div id="submit-loader" class="ga-spinner" style="display: none;"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div id="import-modal" class="ga-modal">
+  <div class="ga-modal-content">
+    <div class="ga-modal-header">
+      <h3 id="import-modal-title">Import Data CSV</h3>
+      <button class="ga-modal-close" id="import-modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="ga-modal-body">
+      <p class="ga-import-description">Upload file CSV untuk mengimpor data greeting secara massal. Pastikan format file sesuai dengan template yang disediakan.</p>
+      
+      <form id="import-form" method="post" enctype="multipart/form-data">
+        <div class="ga-file-upload-area" id="file-drop-area">
+          <div class="ga-file-upload-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ga-upload-icon">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17,8 12,3 7,8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p class="ga-upload-text">Pilih file CSV atau seret dan lepas di sini</p>
+            <p class="ga-upload-subtext">Hanya mendukung file .csv</p>
+            <div id="file-info" class="ga-file-info" style="display: none;">
+              <span id="file-name"></span>
+              <span id="file-size"></span>
+            </div>
+          </div>
+          <input type="file" name="csv_file" accept=".csv" required class="ga-file-input" id="csv-file-input">
+        </div>
+        
+        <div class="ga-modal-actions">
+          <button type="button" class="ga-btn ga-btn-secondary" id="import-cancel-btn">Batal</button>
+          <button type="submit" name="import_csv" class="ga-btn ga-btn-primary" id="import-submit-btn">
+            <span id="import-submit-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17,8 12,3 7,8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Import Data
+            </span>
+            <div id="import-submit-loader" class="ga-spinner" style="display: none;"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Modern SaaS UI Styles */
+  .mb-0 {
+    margin-bottom: 0 !important;
+  }
+
+  .ga-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .ga-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+  }
+
+  .ga-modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+  }
+
+  .ga-modal.show .ga-modal-content {
+    transform: scale(1);
+  }
+
+  .ga-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0 24px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 24px;
+  }
+
+  .ga-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .ga-modal-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s ease;
+  }
+
+  .ga-modal-close:hover {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  .ga-modal-body {
+    padding: 0 24px 24px 24px;
+  }
+
+  .ga-form-group {
+    margin-bottom: 20px;
+  }
+
+  .ga-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+  }
+
+  .ga-input,
+  .ga-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    height: 44px;
+    box-sizing: border-box;
+  }
+
+  .ga-input:focus,
+  .ga-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .ga-textarea {
+    resize: vertical;
+    min-height: 80px;
+    height: auto;
+  }
+
+  .ga-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .ga-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: none;
+    outline: none;
+  }
+
+  .ga-btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .ga-btn-primary {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .ga-btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  }
+
+  .ga-btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ga-btn-secondary {
+    background: #f8fafc;
+    color: #374151;
+    border: 1px solid #d1d5db;
+  }
+
+  .ga-btn-secondary:hover {
+    background: #f1f5f9;
+    border-color: #9ca3af;
+  }
+
+  .ga-btn-danger {
+    background: #ef4444;
+    color: white;
+  }
+
+  .ga-btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+  }
+
+  .ga-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Table action buttons alignment */
+  td .ga-btn {
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  td .ga-btn:last-child {
+    margin-right: 0;
+  }
+
+  /* Ensure action column has proper alignment */
+  td:last-child {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  /* Search UI Styles */
+  .ga-search-header {
+    margin-bottom: 24px;
+  }
+
+  .ga-subtitle {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 8px 0 0 0;
+  }
+
+  .ga-search-form {
+    margin-bottom: 24px;
+  }
+
+  .ga-search-grid {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .ga-form-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .ga-search-button-wrapper {
+    flex-shrink: 0;
+  }
+
+  .ga-search-btn {
+    white-space: nowrap;
+    height: 44px;
+    padding: 12px 20px;
+  }
+
+  .ga-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+  }
+
+  .ga-search-result {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    display: none;
+  }
+
+  .ga-search-result.show {
+    display: block;
+  }
+
+  .ga-search-result p {
+    margin: 0;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  /* Filter UI Styles */
+  .ga-filter-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .ga-filter-form {
+    margin: 0;
+  }
+
+  .ga-filter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .ga-filter-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .ga-filter-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: #ffffff;
+  }
+
+  .ga-filter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .ga-filter-btn,
+  .ga-clear-btn {
+    white-space: nowrap;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .ga-btn-ghost {
+    background: transparent;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+  }
+
+  .ga-btn-ghost:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  /* Section Headers */
+  .ga-section-header {
+    margin-bottom: 24px;
+  }
+
+  .ga-data-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    gap: 20px;
+  }
+
+  .ga-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* CSV Import Styles */
+  .ga-import-form {
+    margin: 0;
+  }
+
+  .ga-file-upload-area {
+    position: relative;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: #fafafa;
+    margin-bottom: 20px;
+  }
+
+  .ga-file-upload-area:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+  }
+
+  .ga-file-upload-area.dragover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  .ga-file-upload-content {
+    pointer-events: none;
+  }
+
+  .ga-upload-icon {
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  .ga-upload-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+    margin: 0 0 8px 0;
+  }
+
+  .ga-upload-subtext {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .ga-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .ga-import-actions {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .ga-import-description {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .ga-file-info {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #0c4a6e;
+  }
+
+  .ga-file-info span {
+    display: block;
+  }
+
+  /* Table Styles */
+  .ga-table-container {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .ga-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .ga-th {
+    background: #f8fafc;
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  .ga-td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .ga-tr:hover {
+    background: #f8fafc;
+  }
+
+  .ga-tr:last-child .ga-td {
+    border-bottom: none;
+  }
+
+  .ga-greeting-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ga-actions-cell {
+    white-space: nowrap;
+    width: 1%;
+  }
+
+  .ga-empty-state {
+    text-align: center;
+    padding: 60px 20px !important;
+  }
+
+  .ga-empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ga-empty-icon {
+    color: #9ca3af;
+  }
+
+  .ga-empty-content p {
+    margin: 0;
+    color: #6b7280;
+  }
+
+  .ga-empty-content p:first-of-type {
+    font-weight: 500;
+    color: #374151;
+    font-size: 16px;
+  }
+
+  .ga-empty-subtext {
+    font-size: 14px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .ga-search-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .ga-filter-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .ga-filter-group {
+      justify-content: stretch;
+    }
+
+    .ga-data-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ga-table-container {
+      overflow-x: auto;
+    }
+
+    .ga-greeting-cell {
+      max-width: 150px;
+    }
+  }
+</style>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const searchForm = document.getElementById('search-form');
@@ -250,8 +980,10 @@ if (isset($_GET['edit'])) {
           if (data.success) {
             // Tampilkan hasil pencarian
             searchResult.innerHTML = `<p><strong>Greeting:</strong> ${data.data.greeting}</p>`;
+            searchResult.classList.add('show');
           } else {
-            searchResult.innerHTML = `<p>${data.message}</p>`;
+            searchResult.innerHTML = `<p style="color: #ef4444;">${data.message}</p>`;
+            searchResult.classList.add('show');
           }
         })
         .catch(error => {
@@ -261,42 +993,256 @@ if (isset($_GET['edit'])) {
     });
   });
 
-  // fungsi hapus
-  document.addEventListener('DOMContentLoaded', function() {
-    const deleteButtons = document.querySelectorAll('.delete-data');
+  // Modal functionality
+  const modal = document.getElementById('data-modal');
+  const addBtn = document.getElementById('add-data-btn');
+  
+  // Import modal functionality
+  const importModal = document.getElementById('import-modal');
+  const importBtn = document.getElementById('import-csv-btn');
+  const importForm = document.getElementById('import-form');
+  const importCancelBtn = document.getElementById('import-cancel-btn');
+  const importModalClose = document.getElementById('import-modal-close');
+  const fileDropArea = document.getElementById('file-drop-area');
+  const csvFileInput = document.getElementById('csv-file-input');
+  const fileInfo = document.getElementById('file-info');
+  const fileName = document.getElementById('file-name');
+  const fileSize = document.getElementById('file-size');
+  const importSubmitBtn = document.getElementById('import-submit-btn');
+  const importSubmitText = document.getElementById('import-submit-text');
+  const importSubmitLoader = document.getElementById('import-submit-loader');
+  const modalTitle = document.getElementById('modal-title');
+  const dataForm = document.getElementById('data-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitText = document.getElementById('submit-text');
+  const submitLoader = document.getElementById('submit-loader');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const modalClose = document.getElementById('modal-close');
 
-    deleteButtons.forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
+  // Form fields
+  const dataId = document.getElementById('data-id');
+  const kataKunci = document.getElementById('modal-kata-kunci');
+  const grupIklan = document.getElementById('modal-grup-iklan');
+  const idGrupIklan = document.getElementById('modal-id-grup-iklan');
+  const nomorKataKunci = document.getElementById('modal-nomor-kata-kunci');
+  const greeting = document.getElementById('modal-greeting');
 
-        // Ambil ID dari atribut data-id
-        const id = this.getAttribute('data-id');
+  let isEditMode = false;
 
-        // Kirim permintaan AJAX
+  // Open modal for adding new data
+  addBtn.addEventListener('click', function() {
+    openModal('add');
+  });
+
+  // Open import modal
+  importBtn.addEventListener('click', function() {
+    openImportModal();
+  });
+
+  function openImportModal() {
+    importModal.style.display = 'flex';
+    setTimeout(() => importModal.classList.add('show'), 10);
+  }
+
+  function closeImportModal() {
+    importModal.classList.remove('show');
+    setTimeout(() => {
+      importModal.style.display = 'none';
+      importForm.reset();
+      fileInfo.style.display = 'none';
+      fileDropArea.classList.remove('dragover');
+      importSubmitBtn.disabled = false;
+      importSubmitText.style.display = 'inline-flex';
+      importSubmitLoader.style.display = 'none';
+    }, 300);
+  }
+
+  // Close import modal events
+  importModalClose.addEventListener('click', closeImportModal);
+  importCancelBtn.addEventListener('click', closeImportModal);
+  importModal.addEventListener('click', function(e) {
+    if (e.target === importModal) closeImportModal();
+  });
+
+  // File upload handling
+  csvFileInput.addEventListener('change', function(e) {
+    handleFile(e.target.files[0]);
+  });
+
+  // Drag and drop functionality
+  fileDropArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    fileDropArea.classList.add('dragover');
+  });
+
+  fileDropArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    fileDropArea.classList.remove('dragover');
+  });
+
+  fileDropArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    fileDropArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      csvFileInput.files = files;
+      handleFile(files[0]);
+    }
+  });
+
+  function handleFile(file) {
+    if (file && file.type === 'text/csv') {
+      fileName.textContent = file.name;
+      fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+      fileInfo.style.display = 'block';
+    } else {
+      alert('Mohon pilih file CSV yang valid.');
+      csvFileInput.value = '';
+      fileInfo.style.display = 'none';
+    }
+  }
+
+  // Handle import form submission
+  importForm.addEventListener('submit', function(e) {
+    if (!csvFileInput.files[0]) {
+      e.preventDefault();
+      alert('Mohon pilih file CSV terlebih dahulu.');
+      return;
+    }
+
+    importSubmitBtn.disabled = true;
+    importSubmitText.style.display = 'none';
+    importSubmitLoader.style.display = 'inline-block';
+  });
+
+  // Open modal for editing data
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.edit-data-btn')) {
+      const btn = e.target.closest('.edit-data-btn');
+      const data = {
+        id: btn.getAttribute('data-id'),
+        kata_kunci: btn.getAttribute('data-kata-kunci'),
+        grup_iklan: btn.getAttribute('data-grup-iklan'),
+        id_grup_iklan: btn.getAttribute('data-id-grup-iklan'),
+        nomor_kata_kunci: btn.getAttribute('data-nomor-kata-kunci'),
+        greeting: btn.getAttribute('data-greeting')
+      };
+      openModal('edit', data);
+    }
+  });
+
+  function openModal(mode, data = null) {
+    isEditMode = mode === 'edit';
+    modalTitle.textContent = isEditMode ? 'Edit Data' : 'Tambah Data Baru';
+    submitText.textContent = isEditMode ? 'Perbarui' : 'Simpan';
+
+    if (isEditMode && data) {
+      dataId.value = data.id;
+      kataKunci.value = data.kata_kunci;
+      grupIklan.value = data.grup_iklan;
+      idGrupIklan.value = data.id_grup_iklan;
+      nomorKataKunci.value = data.nomor_kata_kunci;
+      greeting.value = data.greeting;
+    } else {
+      dataForm.reset();
+      dataId.value = '';
+    }
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+  }
+
+  function closeModal() {
+    modal.classList.remove('show');
+    setTimeout(() => {
+      modal.style.display = 'none';
+      dataForm.reset();
+      submitBtn.disabled = false;
+      submitText.style.display = 'inline';
+      submitLoader.style.display = 'none';
+    }, 300);
+  }
+
+  // Close modal events
+  modalClose.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeModal();
+  });
+
+  // Handle form submission
+  dataForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    submitBtn.disabled = true;
+    submitText.style.display = 'none';
+    submitLoader.style.display = 'inline-block';
+
+    const formData = new FormData(dataForm);
+    const action = isEditMode ? 'update_data' : 'add_data';
+    formData.append(action, '1');
+
+    fetch('', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          closeModal();
+          location.reload();
+        } else {
+          throw new Error('Network response was not ok');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan data.');
+        submitBtn.disabled = false;
+        submitText.style.display = 'inline';
+        submitLoader.style.display = 'none';
+      });
+  });
+
+  // Delete functionality with modern confirmation
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-data')) {
+      e.preventDefault();
+      const btn = e.target.closest('.delete-data');
+      const id = btn.getAttribute('data-id');
+
+      if (confirm('Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
+        // Show loading state
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="ga-spinner"></div> Menghapus...';
+
         fetch(ajaxurl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              action: 'delete_greeting', // Nama action untuk hook AJAX
+              action: 'delete_greeting',
               id: id,
             }),
           })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              alert(data.data); // Tampilkan pesan sukses
-              location.reload(); // Reload halaman untuk memperbarui tabel
+              location.reload();
             } else {
-              alert(data.data); // Tampilkan pesan error
+              alert(data.data);
+              btn.disabled = false;
+              btn.innerHTML = originalText;
             }
           })
           .catch(error => {
             console.error('Error:', error);
             alert('Terjadi kesalahan saat menghapus data.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
           });
-      });
-    });
+      }
+    }
   });
 </script>
