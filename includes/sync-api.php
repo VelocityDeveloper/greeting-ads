@@ -144,6 +144,9 @@ function greeting_ads_sync_data_callback($request) {
                 // Log the action
                 greeting_ads_log_sync_action('insert', $kataKunci, $final_greeting, $nomorKataKunci);
                 
+                // Trigger nglorok webhook for auto-sync
+                greeting_ads_trigger_nglorok_sync('insert', $kataKunci, $final_greeting);
+                
                 return new WP_REST_Response(array(
                     'success' => true,
                     'action' => 'inserted',
@@ -240,4 +243,49 @@ function greeting_ads_log_sync_action($action, $keyword, $greeting, $criterion_i
     // Keep only last 50 logs
     $recent_logs = array_slice($recent_logs, -50);
     update_option('greeting_ads_sync_logs', $recent_logs);
+}
+
+/**
+ * Trigger nglorok webhook for auto-sync
+ */
+function greeting_ads_trigger_nglorok_sync($action, $keyword, $greeting) {
+    // Only trigger on successful insert (not on skipped records)
+    if ($action !== 'insert') {
+        return;
+    }
+    
+    $webhook_url = 'https://nglorok.velocitydeveloper.com/webhook_sync.php';
+    $api_key = 'hutara000';
+    
+    $payload = array(
+        'triggered_by' => 'greeting-ads',
+        'action' => $action,
+        'keyword' => $keyword,
+        'greeting' => $greeting,
+        'timestamp' => current_time('mysql')
+    );
+    
+    // Use WordPress HTTP API for better compatibility
+    $response = wp_remote_post($webhook_url, array(
+        'timeout' => 30,
+        'headers' => array(
+            'Content-Type' => 'application/json',
+            'X-API-Key' => $api_key
+        ),
+        'body' => json_encode($payload)
+    ));
+    
+    // Log the webhook trigger result
+    if (is_wp_error($response)) {
+        error_log('[Greeting Ads] Failed to trigger nglorok webhook: ' . $response->get_error_message());
+    } else {
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        
+        if ($response_code === 200) {
+            error_log('[Greeting Ads] Nglorok webhook triggered successfully for: ' . $keyword);
+        } else {
+            error_log('[Greeting Ads] Nglorok webhook failed (HTTP ' . $response_code . '): ' . $response_body);
+        }
+    }
 }
