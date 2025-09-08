@@ -115,7 +115,7 @@ function greeting_ads_sync_data_callback($request) {
                 )
             ), 200)
         } else {
-            // Insert new record
+            // Insert new record first without greeting
             $result = $wpdb->insert(
                 $table_name,
                 array(
@@ -123,7 +123,7 @@ function greeting_ads_sync_data_callback($request) {
                     'grup_iklan' => $grupIklan,
                     'id_grup_iklan' => $idGrupIklan,
                     'nomor_kata_kunci' => $nomorKataKunci,
-                    'greeting' => $greeting
+                    'greeting' => '' // temporary empty greeting
                 ),
                 array('%s', '%s', '%s', '%s', '%s')
             );
@@ -131,17 +131,27 @@ function greeting_ads_sync_data_callback($request) {
             if ($result !== false) {
                 $new_id = $wpdb->insert_id;
                 
+                // Now update greeting with format v{id}
+                $final_greeting = 'v' . $new_id;
+                $wpdb->update(
+                    $table_name,
+                    array('greeting' => $final_greeting),
+                    array('id' => $new_id),
+                    array('%s'),
+                    array('%d')
+                );
+                
                 // Log the action
-                greeting_ads_log_sync_action('insert', $kataKunci, $greeting, $nomorKataKunci);
+                greeting_ads_log_sync_action('insert', $kataKunci, $final_greeting, $nomorKataKunci);
                 
                 return new WP_REST_Response(array(
                     'success' => true,
                     'action' => 'inserted',
-                    'message' => "Inserted: {$kataKunci} → {$greeting}",
+                    'message' => "Inserted: {$kataKunci} → {$final_greeting}",
                     'record_id' => $new_id,
                     'data' => array(
                         'kata_kunci' => $kataKunci,
-                        'greeting' => $greeting,
+                        'greeting' => $final_greeting,
                         'nomor_kata_kunci' => $nomorKataKunci
                     )
                 ), 201);
