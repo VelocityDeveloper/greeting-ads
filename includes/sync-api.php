@@ -251,10 +251,13 @@ function greeting_ads_log_sync_action($action, $keyword, $greeting, $criterion_i
 function greeting_ads_trigger_nglorok_sync($action, $keyword, $greeting) {
     // Only trigger on successful insert (not on skipped records)
     if ($action !== 'insert') {
+        error_log('[Greeting Ads] Webhook not triggered - action is: ' . $action);
         return;
     }
     
-    $webhook_url = 'https://nglorok.velocitydeveloper.com/webhook_sync.php';
+    error_log('[Greeting Ads] Triggering nglorok webhook for: ' . $keyword . ' → ' . $greeting);
+    
+    $webhook_url = 'https://velocitydeveloper.net/webhook_sync.php';
     $api_key = 'hutara000';
     
     $payload = array(
