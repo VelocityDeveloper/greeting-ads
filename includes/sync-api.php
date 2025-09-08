@@ -113,7 +113,7 @@ function greeting_ads_sync_data_callback($request) {
                     'greeting' => $greeting,
                     'nomor_kata_kunci' => $nomorKataKunci
                 )
-            ), 200)
+            ), 200);
         } else {
             // Insert new record first without greeting
             $result = $wpdb->insert(
