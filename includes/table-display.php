@@ -436,7 +436,6 @@ if (isset($_GET['edit'])) {
 
         <div id="bulk-delete-preview" class="ga-bulk-delete-preview" style="display: none;">
           <div class="ga-preview-header">
-            <h4>Preview Data yang Akan Dihapus:</h4>
             <span id="preview-count" class="ga-preview-count">0 data</span>
           </div>
           <div id="preview-loading" class="ga-preview-loading" style="display: none;">
@@ -1518,6 +1517,9 @@ if (isset($_GET['edit'])) {
   const bulkDeleteSubmitText = document.getElementById('bulk-delete-submit-text');
   const bulkDeleteSubmitLoader = document.getElementById('bulk-delete-submit-loader');
 
+  // Store the actual keyword count from preview
+  let actualKeywordCount = 0;
+
   // Open bulk delete modal
   bulkDeleteBtn.addEventListener('click', function() {
     openBulkDeleteModal();
@@ -1591,37 +1593,13 @@ if (isset($_GET['edit'])) {
         const count = data.data.count;
         const summary = data.data.summary;
         
+        // Store the actual keyword count for confirmation dialog
+        actualKeywordCount = summary ? summary.length : 0;
+        
         previewCount.textContent = `${count} data total`;
         
         if (items.length > 0) {
-          let summaryHtml = '';
-          if (summary && summary.length > 0) {
-            summaryHtml = `
-              <div class="ga-preview-summary">
-                <h5>Ringkasan data yang akan dihapus:</h5>
-                <table class="ga-summary-table">
-                  <thead>
-                    <tr>
-                      <th>Nomor Kata Kunci</th>
-                      <th>Kata Kunci</th>
-                      <th>Jumlah Data</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${summary.map(s => `
-                      <tr>
-                        <td>${s.keyword_number}</td>
-                        <td>${s.keyword}</td>
-                        <td><span class="ga-count-badge">${s.count}</span></td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `;
-          }
-          
-          previewContent.innerHTML = summaryHtml + `
+          previewContent.innerHTML = `
             <div class="ga-preview-items">
               <h5>Sample data yang akan dihapus (max 20 item):</h5>
               ${items.map(item => `
@@ -1669,7 +1647,8 @@ if (isset($_GET['edit'])) {
       return;
     }
 
-    const keywordCount = keywordLines.length;
+    // Use the actual keyword count from preview, fallback to parsed count
+    const keywordCount = actualKeywordCount > 0 ? actualKeywordCount : keywordLines.length;
     if (!confirm(`Apakah Anda yakin ingin menghapus semua data dengan ${keywordCount} nomor kata kunci ini? Tindakan ini tidak dapat dibatalkan.`)) {
       return;
     }
