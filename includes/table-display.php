@@ -143,6 +143,13 @@ if (isset($_GET['edit'])) {
         <p class="ga-subtitle">Kelola pesan greeting dan parameter UTM Anda</p>
       </div>
       <div class="ga-header-actions">
+        <button id="bulk-delete-btn" class="ga-btn ga-btn-danger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"></polyline>
+            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+          </svg>
+          Bulk Delete
+        </button>
         <button id="import-csv-btn" class="ga-btn ga-btn-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -384,6 +391,79 @@ if (isset($_GET['edit'])) {
               Import Data
             </span>
             <div id="import-submit-loader" class="ga-spinner" style="display: none;"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Delete Modal -->
+<div id="bulk-delete-modal" class="ga-modal">
+  <div class="ga-modal-content">
+    <div class="ga-modal-header">
+      <h3 id="bulk-delete-modal-title">Bulk Delete Berdasarkan Nomor Kata Kunci</h3>
+      <button class="ga-modal-close" id="bulk-delete-modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="ga-modal-body">
+      <div class="ga-bulk-delete-warning">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ga-warning-icon">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <h4>Peringatan!</h4>
+        <p>Fitur ini akan menghapus SEMUA data greeting yang memiliki nomor kata kunci yang sama. Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      
+      <form id="bulk-delete-form">
+        <div class="ga-form-group">
+          <label for="bulk-delete-keyword-number" class="ga-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            Nomor Kata Kunci
+          </label>
+          <textarea id="bulk-delete-keyword-number" name="nomor_kata_kunci" class="ga-textarea" rows="6" placeholder="Masukkan nomor kata kunci (satu per baris)&#10;&#10;Contoh:&#10;183848825646&#10;187830281489&#10;184734032123" required></textarea>
+          <p class="ga-input-hint">Masukkan satu nomor kata kunci per baris. Format bisa berupa angka saja atau dengan prefix kwd- (contoh: 123456789 atau kwd-123456789)</p>
+        </div>
+
+        <div id="bulk-delete-preview" class="ga-bulk-delete-preview" style="display: none;">
+          <div class="ga-preview-header">
+            <h4>Preview Data yang Akan Dihapus:</h4>
+            <span id="preview-count" class="ga-preview-count">0 data</span>
+          </div>
+          <div id="preview-loading" class="ga-preview-loading" style="display: none;">
+            <div class="ga-spinner"></div>
+            <span>Memuat preview...</span>
+          </div>
+          <div id="preview-content" class="ga-preview-content"></div>
+        </div>
+
+        <div class="ga-modal-actions">
+          <button type="button" class="ga-btn ga-btn-secondary" id="bulk-delete-cancel-btn">Batal</button>
+          <button type="button" class="ga-btn ga-btn-secondary" id="bulk-delete-preview-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Preview Data
+          </button>
+          <button type="submit" class="ga-btn ga-btn-danger" id="bulk-delete-submit-btn" disabled>
+            <span id="bulk-delete-submit-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+              </svg>
+              Hapus Data
+            </span>
+            <div id="bulk-delete-submit-loader" class="ga-spinner" style="display: none;"></div>
           </button>
         </div>
       </form>
@@ -920,6 +1000,150 @@ if (isset($_GET['edit'])) {
     font-size: 14px;
   }
 
+  /* Bulk Delete Modal Styles */
+  .ga-bulk-delete-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+
+  .ga-warning-icon {
+    color: #dc2626;
+    margin-bottom: 12px;
+  }
+
+  .ga-bulk-delete-warning h4 {
+    color: #dc2626;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+  }
+
+  .ga-bulk-delete-warning p {
+    color: #991b1b;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .ga-input-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 4px 0 0 0;
+    font-style: italic;
+  }
+
+  .ga-bulk-delete-preview {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+  .ga-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .ga-preview-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .ga-preview-count {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .ga-preview-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .ga-preview-content {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .ga-preview-item {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .ga-preview-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .ga-preview-item .ga-preview-id {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .ga-preview-item .ga-preview-keyword {
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  .ga-preview-item .ga-preview-greeting {
+    color: #374151;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ga-preview-summary {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 6px;
+  }
+
+  .ga-preview-summary h5 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0c4a6e;
+  }
+
+  .ga-summary-item {
+    padding: 4px 8px;
+    margin: 2px 0;
+    background: white;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #374151;
+  }
+
+  .ga-preview-items h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+
   /* Responsive adjustments */
   @media (max-width: 1024px) {
     .ga-search-grid {
@@ -1244,5 +1468,194 @@ if (isset($_GET['edit'])) {
           });
       }
     }
+  });
+
+  // Bulk Delete Modal Functionality
+  const bulkDeleteModal = document.getElementById('bulk-delete-modal');
+  const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+  const bulkDeleteForm = document.getElementById('bulk-delete-form');
+  const bulkDeleteModalClose = document.getElementById('bulk-delete-modal-close');
+  const bulkDeleteCancelBtn = document.getElementById('bulk-delete-cancel-btn');
+  const bulkDeletePreviewBtn = document.getElementById('bulk-delete-preview-btn');
+  const bulkDeleteSubmitBtn = document.getElementById('bulk-delete-submit-btn');
+  const bulkDeleteKeywordNumber = document.getElementById('bulk-delete-keyword-number');
+  const bulkDeletePreview = document.getElementById('bulk-delete-preview');
+  const previewLoading = document.getElementById('preview-loading');
+  const previewContent = document.getElementById('preview-content');
+  const previewCount = document.getElementById('preview-count');
+  const bulkDeleteSubmitText = document.getElementById('bulk-delete-submit-text');
+  const bulkDeleteSubmitLoader = document.getElementById('bulk-delete-submit-loader');
+
+  // Open bulk delete modal
+  bulkDeleteBtn.addEventListener('click', function() {
+    openBulkDeleteModal();
+  });
+
+  function openBulkDeleteModal() {
+    bulkDeleteModal.style.display = 'flex';
+    setTimeout(() => bulkDeleteModal.classList.add('show'), 10);
+  }
+
+  function closeBulkDeleteModal() {
+    bulkDeleteModal.classList.remove('show');
+    setTimeout(() => {
+      bulkDeleteModal.style.display = 'none';
+      bulkDeleteForm.reset();
+      bulkDeletePreview.style.display = 'none';
+      bulkDeleteSubmitBtn.disabled = true;
+      previewContent.innerHTML = '';
+      bulkDeleteSubmitBtn.disabled = false;
+      bulkDeleteSubmitText.style.display = 'inline-flex';
+      bulkDeleteSubmitLoader.style.display = 'none';
+    }, 300);
+  }
+
+  // Close bulk delete modal events
+  bulkDeleteModalClose.addEventListener('click', closeBulkDeleteModal);
+  bulkDeleteCancelBtn.addEventListener('click', closeBulkDeleteModal);
+  bulkDeleteModal.addEventListener('click', function(e) {
+    if (e.target === bulkDeleteModal) closeBulkDeleteModal();
+  });
+
+  // Preview data functionality
+  bulkDeletePreviewBtn.addEventListener('click', function() {
+    const keywordNumbers = bulkDeleteKeywordNumber.value.trim();
+    if (!keywordNumbers) {
+      alert('Mohon masukkan nomor kata kunci terlebih dahulu.');
+      return;
+    }
+
+    // Parse multiple keyword numbers from textarea
+    const keywordLines = keywordNumbers.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.replace(/^kwd-/, '')); // Clean kwd- prefix
+
+    if (keywordLines.length === 0) {
+      alert('Mohon masukkan nomor kata kunci yang valid.');
+      return;
+    }
+
+    bulkDeletePreview.style.display = 'block';
+    previewLoading.style.display = 'flex';
+    previewContent.innerHTML = '';
+    bulkDeleteSubmitBtn.disabled = true;
+
+    // Fetch preview data
+    const formData = new FormData();
+    formData.append('action', 'preview_bulk_delete_greeting');
+    formData.append('nomor_kata_kunci', JSON.stringify(keywordLines));
+
+    fetch(ajaxurl, {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      previewLoading.style.display = 'none';
+      
+      if (data.success) {
+        const items = data.data.items;
+        const count = data.data.count;
+        const summary = data.data.summary;
+        
+        previewCount.textContent = `${count} data total`;
+        
+        if (items.length > 0) {
+          let summaryHtml = '';
+          if (summary && summary.length > 0) {
+            summaryHtml = `
+              <div class="ga-preview-summary">
+                <h5>Ringkasan per nomor kata kunci:</h5>
+                ${summary.map(s => `<div class="ga-summary-item">${s.keyword}: ${s.count} data</div>`).join('')}
+              </div>
+            `;
+          }
+          
+          previewContent.innerHTML = summaryHtml + `
+            <div class="ga-preview-items">
+              <h5>Sample data yang akan dihapus (max 20 item):</h5>
+              ${items.map(item => `
+                <div class="ga-preview-item">
+                  <div class="ga-preview-id">ID: ${item.id} | Nomor: ${item.nomor_kata_kunci}</div>
+                  <div class="ga-preview-keyword">${item.kata_kunci} (${item.grup_iklan})</div>
+                  <div class="ga-preview-greeting">${item.greeting}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          bulkDeleteSubmitBtn.disabled = false;
+        } else {
+          previewContent.innerHTML = '<p style="text-align: center; color: #6b7280; margin: 20px 0;">Tidak ada data ditemukan dengan nomor kata kunci tersebut.</p>';
+        }
+      } else {
+        previewContent.innerHTML = `<p style="text-align: center; color: #dc2626; margin: 20px 0;">${data.data}</p>`;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      previewLoading.style.display = 'none';
+      previewContent.innerHTML = '<p style="text-align: center; color: #dc2626; margin: 20px 0;">Terjadi kesalahan saat memuat preview.</p>';
+    });
+  });
+
+  // Handle bulk delete form submission
+  bulkDeleteForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const keywordNumbers = bulkDeleteKeywordNumber.value.trim();
+    if (!keywordNumbers) {
+      alert('Mohon masukkan nomor kata kunci terlebih dahulu.');
+      return;
+    }
+
+    // Parse multiple keyword numbers from textarea
+    const keywordLines = keywordNumbers.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.replace(/^kwd-/, '')); // Clean kwd- prefix
+
+    if (keywordLines.length === 0) {
+      alert('Mohon masukkan nomor kata kunci yang valid.');
+      return;
+    }
+
+    const keywordCount = keywordLines.length;
+    if (!confirm(`Apakah Anda yakin ingin menghapus semua data dengan ${keywordCount} nomor kata kunci ini? Tindakan ini tidak dapat dibatalkan.`)) {
+      return;
+    }
+
+    bulkDeleteSubmitBtn.disabled = true;
+    bulkDeleteSubmitText.style.display = 'none';
+    bulkDeleteSubmitLoader.style.display = 'inline-block';
+
+    const formData = new FormData();
+    formData.append('action', 'bulk_delete_greeting_by_keyword');
+    formData.append('nomor_kata_kunci', JSON.stringify(keywordLines));
+
+    fetch(ajaxurl, {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.data);
+        closeBulkDeleteModal();
+        location.reload();
+      } else {
+        alert(data.data);
+        bulkDeleteSubmitBtn.disabled = false;
+        bulkDeleteSubmitText.style.display = 'inline-flex';
+        bulkDeleteSubmitLoader.style.display = 'none';
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Terjadi kesalahan saat menghapus data.');
+      bulkDeleteSubmitBtn.disabled = false;
+      bulkDeleteSubmitText.style.display = 'inline-flex';
+      bulkDeleteSubmitLoader.style.display = 'none';
+    });
   });
 </script>
