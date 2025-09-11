@@ -121,7 +121,7 @@ function handle_bulk_delete_greeting_by_keyword()
   }
 
   // Parse JSON array of keyword numbers or handle single value
-  $keyword_numbers = json_decode($nomor_kata_kunci_raw, true);
+  $keyword_numbers = json_decode(stripslashes($nomor_kata_kunci_raw), true);
   
   // If JSON decode fails, treat as single keyword number
   if (json_last_error() !== JSON_ERROR_NONE) {
@@ -133,8 +133,10 @@ function handle_bulk_delete_greeting_by_keyword()
     return;
   }
 
-  // Sanitize each keyword number
-  $keyword_numbers = array_map('sanitize_text_field', $keyword_numbers);
+  // Sanitize each keyword number and remove any whitespace
+  $keyword_numbers = array_map(function($num) {
+    return sanitize_text_field(trim($num));
+  }, $keyword_numbers);
   $keyword_numbers = array_filter($keyword_numbers, function($num) {
     return !empty($num);
   });
@@ -201,7 +203,7 @@ function handle_preview_bulk_delete_greeting()
   }
 
   // Parse JSON array of keyword numbers or handle single value
-  $keyword_numbers = json_decode($nomor_kata_kunci_raw, true);
+  $keyword_numbers = json_decode(stripslashes($nomor_kata_kunci_raw), true);
   
   // If JSON decode fails, treat as single keyword number
   if (json_last_error() !== JSON_ERROR_NONE) {
@@ -213,8 +215,10 @@ function handle_preview_bulk_delete_greeting()
     return;
   }
 
-  // Sanitize each keyword number
-  $keyword_numbers = array_map('sanitize_text_field', $keyword_numbers);
+  // Sanitize each keyword number and remove any whitespace
+  $keyword_numbers = array_map(function($num) {
+    return sanitize_text_field(trim($num));
+  }, $keyword_numbers);
   $keyword_numbers = array_filter($keyword_numbers, function($num) {
     return !empty($num);
   });
@@ -227,9 +231,9 @@ function handle_preview_bulk_delete_greeting()
   // Build IN clause for SQL query
   $placeholders = implode(',', array_fill(0, count($keyword_numbers), '%s'));
   
-  // Get summary count for each keyword
+  // Get summary with keyword details for each keyword number
   $summary_query = $wpdb->prepare(
-    "SELECT nomor_kata_kunci, COUNT(*) as count FROM $table_name WHERE nomor_kata_kunci IN ($placeholders) GROUP BY nomor_kata_kunci",
+    "SELECT nomor_kata_kunci, kata_kunci, COUNT(*) as count FROM $table_name WHERE nomor_kata_kunci IN ($placeholders) GROUP BY nomor_kata_kunci, kata_kunci ORDER BY nomor_kata_kunci",
     ...$keyword_numbers
   );
   $summary_results = $wpdb->get_results($summary_query, ARRAY_A);
@@ -249,14 +253,41 @@ function handle_preview_bulk_delete_greeting()
   $total_count = $wpdb->get_var($count_query);
 
   if ($total_count == 0) {
-    wp_send_json_error('Tidak ada data dengan nomor kata kunci tersebut.');
+    // Debug: Check what keyword numbers exist in database
+    $all_keywords_query = "SELECT DISTINCT nomor_kata_kunci FROM $table_name LIMIT 10";
+    $existing_keywords = $wpdb->get_col($all_keywords_query);
+    
+    // Also check if any of the numbers exist with partial matches
+    $partial_matches = array();
+    foreach($keyword_numbers as $num) {
+      $partial_query = $wpdb->prepare(
+        "SELECT DISTINCT nomor_kata_kunci FROM $table_name WHERE nomor_kata_kunci LIKE %s LIMIT 3",
+        '%' . $wpdb->esc_like($num) . '%'
+      );
+      $matches = $wpdb->get_col($partial_query);
+      if (!empty($matches)) {
+        $partial_matches[$num] = $matches;
+      }
+    }
+    
+    $error_msg = 'Tidak ada data dengan nomor kata kunci tersebut. Kata kunci yang dicari: ' . implode(', ', $keyword_numbers) . '. Contoh kata kunci yang ada di database: ' . implode(', ', $existing_keywords);
+    
+    if (!empty($partial_matches)) {
+      $error_msg .= '. Kemungkinan kecocokan parsial: ';
+      foreach($partial_matches as $search => $matches) {
+        $error_msg .= $search . ' -> ' . implode(', ', $matches) . '; ';
+      }
+    }
+    
+    wp_send_json_error($error_msg);
     return;
   }
 
   // Format summary for frontend
   $summary = array_map(function($item) {
     return array(
-      'keyword' => $item['nomor_kata_kunci'],
+      'keyword_number' => $item['nomor_kata_kunci'],
+      'keyword' => $item['kata_kunci'],
       'count' => $item['count']
     );
   }, $summary_results);

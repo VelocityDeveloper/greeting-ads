@@ -1122,19 +1122,51 @@ if (isset($_GET['edit'])) {
   }
 
   .ga-preview-summary h5 {
-    margin: 0 0 8px 0;
+    margin: 0 0 12px 0;
     font-size: 14px;
     font-weight: 600;
     color: #0c4a6e;
   }
 
-  .ga-summary-item {
-    padding: 4px 8px;
-    margin: 2px 0;
+  .ga-summary-table {
+    width: 100%;
+    border-collapse: collapse;
     background: white;
-    border-radius: 4px;
+    border-radius: 6px;
+    overflow: hidden;
     font-size: 13px;
+  }
+
+  .ga-summary-table th {
+    background: #f8fafc;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
     color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .ga-summary-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+  }
+
+  .ga-summary-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .ga-summary-table tr:hover {
+    background: #f8fafc;
+  }
+
+  .ga-count-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
   }
 
   .ga-preview-items h5 {
@@ -1566,8 +1598,25 @@ if (isset($_GET['edit'])) {
           if (summary && summary.length > 0) {
             summaryHtml = `
               <div class="ga-preview-summary">
-                <h5>Ringkasan per nomor kata kunci:</h5>
-                ${summary.map(s => `<div class="ga-summary-item">${s.keyword}: ${s.count} data</div>`).join('')}
+                <h5>Ringkasan data yang akan dihapus:</h5>
+                <table class="ga-summary-table">
+                  <thead>
+                    <tr>
+                      <th>Nomor Kata Kunci</th>
+                      <th>Kata Kunci</th>
+                      <th>Jumlah Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${summary.map(s => `
+                      <tr>
+                        <td>${s.keyword_number}</td>
+                        <td>${s.keyword}</td>
+                        <td><span class="ga-count-badge">${s.count}</span></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
               </div>
             `;
           }
