@@ -65,16 +65,25 @@ function velocity_render_admin_page()
   if (isset($_GET['edit'])) {
     $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['edit'])));
   }
+  // Filter Setup
+  $selected_greeting = isset($_GET['filter_greeting']) ? sanitize_text_field($_GET['filter_greeting']) : '';
+
+  // Build WHERE clause for filtering
+  $where_clause = "WHERE 1=1";
+  if (!empty($selected_greeting)) {
+    $where_clause .= $wpdb->prepare(" AND greeting LIKE %s", '%' . $wpdb->esc_like($selected_greeting) . '%');
+  }
+
   // Pagination Setup
   $per_page = 40;
   $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
   $offset = ($current_page - 1) * $per_page;
 
-  $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+  $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name $where_clause");
   $total_pages = ceil($total_items / $per_page);
 
   $results = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT %d OFFSET %d",
+    "SELECT * FROM $table_name $where_clause ORDER BY created_at DESC LIMIT %d OFFSET %d",
     $per_page,
     $offset
   ));
@@ -131,14 +140,47 @@ function velocity_render_admin_page()
       </div>
     </div>
 
-    <div style="display: flex; justify-content: left;gap: 10px;">
-      <button type="button" class="button button-primary" style="margin-bottom: 20px;" onclick="openModal()">+ Tambah Data</button>
-      <form action="<?php echo admin_url('admin-post.php'); ?>" method="post">
-        <input type="hidden" name="action" value="velocity_export_to_excel">
-        <button type="submit" class="button button-primary">
-          <span style="margin-top: 5px;" class="dashicons dashicons-download"></span> Export Excel</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" class="button button-primary" onclick="openModal()">+ Tambah Data</button>
+        <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" style="display: inline;">
+          <input type="hidden" name="action" value="velocity_export_to_excel">
+          <button type="submit" class="button button-primary">
+            <span style="margin-top: 5px;" class="dashicons dashicons-download"></span> Export Excel</button>
+        </form>
+      </div>
+
+      <!-- Filter Greeting -->
+      <form method="get" action="" style="display: flex; align-items: center; gap: 10px;">
+        <input type="hidden" name="page" value="rekap-chat-form">
+        <label for="filter_greeting" style="font-weight: bold;">Filter Greeting:</label>
+        <input
+          type="text"
+          name="filter_greeting"
+          id="filter_greeting"
+          value="<?php echo htmlspecialchars($selected_greeting); ?>"
+          placeholder="Contoh: v5008"
+          style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 200px;"
+        >
+        <button type="submit" class="button button-primary">Filter</button>
+        <button type="button" class="button" onclick="clearFilter()">Clear</button>
       </form>
     </div>
+
+    <?php if (!empty($selected_greeting)): ?>
+      <div style="background: #e7f3ff; border: 1px solid #2271b1; border-radius: 4px; padding: 8px 12px; margin-bottom: 15px;">
+        <strong>Filter Aktif:</strong>
+        Greeting = <?php echo htmlspecialchars($selected_greeting); ?>
+        <a href="?page=rekap-chat-form" style="float: right; color: #d63638;">✕ Hapus Filter</a>
+        <div style="margin-top: 5px; font-size: 12px; color: #50575e;">
+          Menampilkan <strong><?php echo $total_items; ?></strong> data
+        </div>
+      </div>
+    <?php elseif ($total_items > 0): ?>
+      <div style="margin-bottom: 10px; color: #50575e;">
+        Menampilkan <strong><?php echo $total_items; ?></strong> data
+      </div>
+    <?php endif; ?>
 
     <form method="post">
 
@@ -191,7 +233,14 @@ function velocity_render_admin_page()
             <?php endforeach;
           else: ?>
             <tr>
-              <td colspan="10">Belum ada data.</td>
+              <td colspan="10">
+                <?php if (!empty($selected_greeting)): ?>
+                  Tidak ada data dengan greeting "<strong><?php echo htmlspecialchars($selected_greeting); ?></strong>".
+                  <br><a href="?page=rekap-chat-form">Tampilkan semua data</a>
+                <?php else: ?>
+                  Belum ada data.
+                <?php endif; ?>
+              </td>
             </tr>
           <?php endif; ?>
         </tbody>
@@ -227,7 +276,11 @@ function velocity_render_admin_page()
             if ($i == $current_page) {
               echo '<span class="page-numbers current" style="padding: 10px;">' . $i . '</span>';
             } else {
-              echo '<a class="page-numbers" style="padding: 10px;" href="?page=rekap-chat-form&paged=' . $i . '">' . $i . '</a>';
+              $pagination_url = '?page=rekap-chat-form&paged=' . $i;
+              if (!empty($selected_greeting)) {
+                $pagination_url .= '&filter_greeting=' . urlencode($selected_greeting);
+              }
+              echo '<a class="page-numbers" style="padding: 10px;" href="' . esc_url($pagination_url) . '">' . $i . '</a>';
             }
             $last = $i;
           }
@@ -243,6 +296,11 @@ function velocity_render_admin_page()
 
       function closeModal() {
         document.getElementById('modalForm').style.display = 'none';
+      }
+
+      function clearFilter() {
+        // Reset ke halaman utama tanpa filter
+        window.location.href = '?page=rekap-chat-form';
       }
       document.getElementById('select_all').addEventListener('click', function() {
         let checkboxes = document.querySelectorAll('input[name="selected_ids[]"]');

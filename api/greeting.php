@@ -31,6 +31,12 @@ function register_greeting_api()
     'callback' => 'get_greeting_validation_stats',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/test-validation', [
+    'methods' => 'GET',
+    'callback' => 'test_validation_stats',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -310,7 +316,7 @@ function generate_xml_response($data)
 function get_greeting_validation_stats($request)
 {
   global $wpdb;
-  $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
+  $table_name = $wpdb->prefix . 'rekap_form';
 
   // Get keyword parameter from request
   $keyword = $request->get_param('keyword');
@@ -319,10 +325,10 @@ function get_greeting_validation_stats($request)
     return new WP_Error('missing_parameter', 'Keyword parameter is required', ['status' => 400]);
   }
 
-  // Query to get all records with matching keyword (case insensitive)
+  // Query to get all records with matching greeting (LIKE query like in rekap chat)
   $query = $wpdb->prepare(
-    "SELECT * FROM $table_name WHERE LOWER(kata_kunci) = LOWER(%s)",
-    $keyword
+    "SELECT * FROM $table_name WHERE greeting LIKE %s",
+    '%' . $wpdb->esc_like($keyword) . '%'
   );
 
   $records = $wpdb->get_results($query, ARRAY_A);
@@ -338,10 +344,19 @@ function get_greeting_validation_stats($request)
     ]);
   }
 
-  // For now, assume all records are valid since there's no validation field in the table
-  // This logic can be enhanced later when validation status is added to the table
-  $valid_count = count($records);
+  // Count valid and invalid based on ai_result field
+  $valid_count = 0;
   $invalid_count = 0;
+
+  foreach ($records as $record) {
+    $ai_result = strtolower(trim($record['ai_result'] ?? ''));
+    if ($ai_result === 'valid') {
+      $valid_count++;
+    } elseif (in_array($ai_result, ['dilarang', 'invalid', 'blocked'])) {
+      $invalid_count++;
+    }
+    // Other values are ignored (not counted as valid or invalid)
+  }
 
   return rest_ensure_response([
     'success' => true,
@@ -350,5 +365,40 @@ function get_greeting_validation_stats($request)
     'invalid' => $invalid_count,
     'total' => count($records),
     'data' => $records
+  ]);
+}
+
+function test_validation_stats($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  // Get keyword parameter from request
+  $keyword = $request->get_param('keyword');
+
+  if (empty($keyword)) {
+    return rest_ensure_response([
+      'success' => true,
+      'message' => 'Test endpoint - no keyword provided',
+      'table_name' => $table_name
+    ]);
+  }
+
+  // Test query that will be used
+  $query = $wpdb->prepare(
+    "SELECT * FROM $table_name WHERE greeting LIKE %s",
+    '%' . $wpdb->esc_like($keyword) . '%'
+  );
+
+  $records = $wpdb->get_results($query, ARRAY_A);
+
+  return rest_ensure_response([
+    'success' => true,
+    'keyword' => $keyword,
+    'table_name' => $table_name,
+    'query' => str_replace('%s', "'%" . $keyword . "%'", $query),
+    'records_found' => count($records),
+    'sample_records' => array_slice($records, 0, 3), // First 3 records
+    'total_records_in_table' => $wpdb->get_var("SELECT COUNT(*) FROM $table_name")
   ]);
 }
