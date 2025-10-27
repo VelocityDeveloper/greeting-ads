@@ -202,14 +202,11 @@ function validasi_jenis_web($input)
   }
 
   $payload = [
-    'model' => 'gpt-4.1',
+    'model' => 'gpt-5',
     'messages' => [
       ['role' => 'system', 'content' => $prompt],
       ['role' => 'user', 'content' => $input]
-    ],
-    'temperature' => 0,
-    'top_p' => 1,
-    'max_tokens' => 10,
+    ]
   ];
 
   $ch = curl_init('https://api.openai.com/v1/chat/completions');

@@ -125,8 +125,8 @@ function chat_form_new($atts)
           $("#info-wa-new").text("");
         }
 
-        if (website.length < 10) {
-          $("#info-website-new").text("Website minimal 10 karakter").css("color", "red");
+        if (website.length < 27) {
+          $("#info-website-new").text("Minimal 27 karakter").css("color", "red");
           valid = false;
           $("#info-new").text("");
         } else {
