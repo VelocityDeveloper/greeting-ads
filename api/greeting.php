@@ -25,6 +25,12 @@ function register_greeting_api()
     'callback' => 'get_sync_greeting_data',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/validation-stats', [
+    'methods' => 'GET',
+    'callback' => 'get_greeting_validation_stats',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -297,6 +303,52 @@ function generate_xml_response($data)
   
   $response = rest_ensure_response($xml->asXML());
   $response->header('Content-Type', 'application/xml');
-  
+
   return $response;
+}
+
+function get_greeting_validation_stats($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
+
+  // Get keyword parameter from request
+  $keyword = $request->get_param('keyword');
+
+  if (empty($keyword)) {
+    return new WP_Error('missing_parameter', 'Keyword parameter is required', ['status' => 400]);
+  }
+
+  // Query to get all records with matching keyword (case insensitive)
+  $query = $wpdb->prepare(
+    "SELECT * FROM $table_name WHERE LOWER(kata_kunci) = LOWER(%s)",
+    $keyword
+  );
+
+  $records = $wpdb->get_results($query, ARRAY_A);
+
+  if (empty($records)) {
+    return rest_ensure_response([
+      'success' => true,
+      'keyword' => $keyword,
+      'valid' => 0,
+      'invalid' => 0,
+      'total' => 0,
+      'message' => 'No records found for this keyword'
+    ]);
+  }
+
+  // For now, assume all records are valid since there's no validation field in the table
+  // This logic can be enhanced later when validation status is added to the table
+  $valid_count = count($records);
+  $invalid_count = 0;
+
+  return rest_ensure_response([
+    'success' => true,
+    'keyword' => $keyword,
+    'valid' => $valid_count,
+    'invalid' => $invalid_count,
+    'total' => count($records),
+    'data' => $records
+  ]);
 }
