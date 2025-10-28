@@ -44,6 +44,18 @@ function register_vdnet_api()
     'callback' => 'vdnet_delete_by_date_range',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/rekap/filter', [
+    'methods' => 'GET',
+    'callback' => 'vdnet_filter_rekap_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
+
+  register_rest_route('greeting/v1', '/rekap/stats', [
+    'methods' => 'GET',
+    'callback' => 'vdnet_get_rekap_stats',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 /**
@@ -604,6 +616,243 @@ function vdnet_delete_by_date_range($request)
       'date_from' => $date_from,
       'date_to' => $date_to,
       'additional_filters' => $additional_filters
+    ]
+  ]);
+}
+
+/**
+ * Filter rekap_form data by date range and other criteria
+ * This accesses the actual form submission data from page-rekap.php
+ */
+function vdnet_filter_rekap_data($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form'; // Same as page-rekap.php
+
+  // Base query
+  $query = "SELECT * FROM $table_name WHERE 1=1";
+  $query_params = [];
+
+  // Filter parameters
+  $date_from = $request->get_param('date_from');
+  $date_to = $request->get_param('date_to');
+  $nama = $request->get_param('nama');
+  $no_whatsapp = $request->get_param('no_whatsapp');
+  $jenis_website = $request->get_param('jenis_website');
+  $via = $request->get_param('via');
+  $utm_content = $request->get_param('utm_content');
+  $utm_medium = $request->get_param('utm_medium');
+  $greeting = $request->get_param('greeting');
+  $ai_result = $request->get_param('ai_result');
+
+  // Pagination parameters
+  $page = max(1, (int)$request->get_param('page'));
+  $per_page = min(1000, max(1, (int)$request->get_param('per_page') ?: 50));
+  $offset = ($page - 1) * $per_page;
+
+  // Search parameter
+  $search = $request->get_param('search');
+
+  // Build WHERE conditions
+  if (!empty($date_from)) {
+    $query .= " AND DATE(created_at) >= %s";
+    $query_params[] = sanitize_text_field($date_from);
+  }
+
+  if (!empty($date_to)) {
+    $query .= " AND DATE(created_at) <= %s";
+    $query_params[] = sanitize_text_field($date_to);
+  }
+
+  if (!empty($nama)) {
+    $query .= " AND nama LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($nama) . '%';
+  }
+
+  if (!empty($no_whatsapp)) {
+    $query .= " AND no_whatsapp LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($no_whatsapp) . '%';
+  }
+
+  if (!empty($jenis_website)) {
+    $query .= " AND jenis_website LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($jenis_website) . '%';
+  }
+
+  if (!empty($via)) {
+    $query .= " AND via LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($via) . '%';
+  }
+
+  if (!empty($utm_content)) {
+    $query .= " AND utm_content LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($utm_content) . '%';
+  }
+
+  if (!empty($utm_medium)) {
+    $query .= " AND utm_medium LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($utm_medium) . '%';
+  }
+
+  if (!empty($greeting)) {
+    $query .= " AND greeting LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($greeting) . '%';
+  }
+
+  if (!empty($ai_result)) {
+    $query .= " AND ai_result = %s";
+    $query_params[] = sanitize_text_field($ai_result);
+  }
+
+  // Global search across relevant text fields
+  if (!empty($search)) {
+    $query .= " AND (nama LIKE %s OR no_whatsapp LIKE %s OR jenis_website LIKE %s OR via LIKE %s OR utm_content LIKE %s OR utm_medium LIKE %s OR greeting LIKE %s)";
+    $search_term = '%' . $wpdb->esc_like($search) . '%';
+    $query_params = array_merge($query_params, [$search_term, $search_term, $search_term, $search_term, $search_term, $search_term, $search_term]);
+  }
+
+  // Count total records for pagination
+  $count_query = str_replace("SELECT *", "SELECT COUNT(*)", $query);
+  $total_items = 0;
+  if (!empty($query_params)) {
+    $total_items = $wpdb->get_var($wpdb->prepare($count_query, $query_params));
+  } else {
+    $total_items = $wpdb->get_var($count_query);
+  }
+
+  // Add ORDER BY and LIMIT
+  $order_by = $request->get_param('order_by') ?: 'created_at';
+  $order = $request->get_param('order') ?: 'DESC';
+
+  // Validate order_by column
+  $allowed_columns = ['id', 'nama', 'no_whatsapp', 'jenis_website', 'via', 'utm_content', 'utm_medium', 'greeting', 'ai_result', 'created_at'];
+  if (!in_array($order_by, $allowed_columns)) {
+    $order_by = 'created_at';
+  }
+
+  // Validate order direction
+  if (!in_array(strtoupper($order), ['ASC', 'DESC'])) {
+    $order = 'DESC';
+  }
+
+  $query .= " ORDER BY $order_by $order LIMIT %d OFFSET %d";
+  $query_params[] = $per_page;
+  $query_params[] = $offset;
+
+  // Execute main query
+  if (!empty($query_params)) {
+    $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+  } else {
+    $data = $wpdb->get_results($query, ARRAY_A);
+  }
+
+  // Prepare response with pagination info
+  $response_data = [
+    'success' => true,
+    'data' => $data,
+    'pagination' => [
+      'total_items' => (int)$total_items,
+      'total_pages' => ceil($total_items / $per_page),
+      'current_page' => $page,
+      'per_page' => $per_page
+    ],
+    'filters' => [
+      'date_from' => $date_from,
+      'date_to' => $date_to,
+      'nama' => $nama,
+      'no_whatsapp' => $no_whatsapp,
+      'jenis_website' => $jenis_website,
+      'via' => $via,
+      'utm_content' => $utm_content,
+      'utm_medium' => $utm_medium,
+      'greeting' => $greeting,
+      'ai_result' => $ai_result,
+      'search' => $search
+    ]
+  ];
+
+  return rest_ensure_response($response_data);
+}
+
+/**
+ * Get statistics from rekap_form table
+ */
+function vdnet_get_rekap_stats($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  // Get date range parameters
+  $date_from = $request->get_param('date_from');
+  $date_to = $request->get_param('date_to');
+  $greeting_filter = $request->get_param('greeting');
+
+  // Base WHERE clause
+  $where = "WHERE 1=1";
+  $where_params = [];
+
+  if (!empty($date_from)) {
+    $where .= " AND DATE(created_at) >= %s";
+    $where_params[] = sanitize_text_field($date_from);
+  }
+
+  if (!empty($date_to)) {
+    $where .= " AND DATE(created_at) <= %s";
+    $where_params[] = sanitize_text_field($date_to);
+  }
+
+  if (!empty($greeting_filter)) {
+    $where .= " AND greeting LIKE %s";
+    $where_params[] = '%' . $wpdb->esc_like($greeting_filter) . '%';
+  }
+
+  // Build queries
+  $total_query = "SELECT COUNT(*) FROM $table_name $where";
+  $valid_query = "SELECT COUNT(*) FROM $table_name $where AND ai_result = 'valid'";
+  $invalid_query = "SELECT COUNT(*) FROM $table_name $where AND ai_result = 'dilarang'";
+  $unknown_query = "SELECT COUNT(*) FROM $table_name $where AND (ai_result IS NULL OR ai_result NOT IN ('valid', 'dilarang'))";
+
+  // Execute queries
+  if (!empty($where_params)) {
+    $total = $wpdb->get_var($wpdb->prepare($total_query, $where_params));
+    $valid = $wpdb->get_var($wpdb->prepare($valid_query, $where_params));
+    $invalid = $wpdb->get_var($wpdb->prepare($invalid_query, $where_params));
+    $unknown = $wpdb->get_var($wpdb->prepare($unknown_query, $where_params));
+  } else {
+    $total = $wpdb->get_var($total_query);
+    $valid = $wpdb->get_var($valid_query);
+    $invalid = $wpdb->get_var($invalid_query);
+    $unknown = $wpdb->get_var($unknown_query);
+  }
+
+  // Get greeting distribution
+  $greeting_query = "SELECT greeting, COUNT(*) as count FROM $table_name $where GROUP BY greeting ORDER BY count DESC LIMIT 10";
+  if (!empty($where_params)) {
+    $greeting_stats = $wpdb->get_results($wpdb->prepare($greeting_query, $where_params), ARRAY_A);
+  } else {
+    $greeting_stats = $wpdb->get_results($greeting_query, ARRAY_A);
+  }
+
+  // Get daily submission trends (last 30 days)
+  $trends_query = "SELECT DATE(created_at) as date, COUNT(*) as submissions FROM $table_name WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) GROUP BY DATE(created_at) ORDER BY date DESC";
+  $daily_trends = $wpdb->get_results($trends_query, ARRAY_A);
+
+  return rest_ensure_response([
+    'success' => true,
+    'stats' => [
+      'total_submissions' => (int)$total,
+      'valid_submissions' => (int)$valid,
+      'invalid_submissions' => (int)$invalid,
+      'unknown_submissions' => (int)$unknown,
+      'validation_rate' => $total > 0 ? round(($valid / $total) * 100, 2) : 0,
+      'invalid_rate' => $total > 0 ? round(($invalid / $total) * 100, 2) : 0
+    ],
+    'greeting_distribution' => $greeting_stats,
+    'daily_trends' => $daily_trends,
+    'filters_applied' => [
+      'date_from' => $date_from,
+      'date_to' => $date_to,
+      'greeting' => $greeting_filter
     ]
   ]);
 }
