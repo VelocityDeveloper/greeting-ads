@@ -629,6 +629,12 @@ function vdnet_filter_rekap_data($request)
   global $wpdb;
   $table_name = $wpdb->prefix . 'rekap_form'; // Same as page-rekap.php
 
+  // Check if created_at column exists, if not add it
+  $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'created_at'");
+  if (!$column_exists) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+  }
+
   // Base query
   $query = "SELECT * FROM $table_name WHERE 1=1";
   $query_params = [];
@@ -650,7 +656,7 @@ function vdnet_filter_rekap_data($request)
   $per_page = min(1000, max(1, (int)$request->get_param('per_page') ?: 50));
   $offset = ($page - 1) * $per_page;
 
-  // Search parameter
+  // Search parameter - PRIORITAS untuk greeting search
   $search = $request->get_param('search');
 
   // Build WHERE conditions
@@ -704,9 +710,10 @@ function vdnet_filter_rekap_data($request)
     $query_params[] = sanitize_text_field($ai_result);
   }
 
-  // Global search across relevant text fields
+  // Enhanced global search - FOCUS pada greeting field untuk keyword search
   if (!empty($search)) {
-    $query .= " AND (nama LIKE %s OR no_whatsapp LIKE %s OR jenis_website LIKE %s OR via LIKE %s OR utm_content LIKE %s OR utm_medium LIKE %s OR greeting LIKE %s)";
+    // Prioritasi greeting field search (untuk keywords seperti v2843)
+    $query .= " AND (greeting LIKE %s OR nama LIKE %s OR no_whatsapp LIKE %s OR jenis_website LIKE %s OR via LIKE %s OR utm_content LIKE %s OR utm_medium LIKE %s)";
     $search_term = '%' . $wpdb->esc_like($search) . '%';
     $query_params = array_merge($query_params, [$search_term, $search_term, $search_term, $search_term, $search_term, $search_term, $search_term]);
   }
@@ -782,10 +789,17 @@ function vdnet_get_rekap_stats($request)
   global $wpdb;
   $table_name = $wpdb->prefix . 'rekap_form';
 
+  // Check if created_at column exists, if not add it
+  $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'created_at'");
+  if (!$column_exists) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+  }
+
   // Get date range parameters
   $date_from = $request->get_param('date_from');
   $date_to = $request->get_param('date_to');
   $greeting_filter = $request->get_param('greeting');
+  $search_filter = $request->get_param('search'); // Tambah search parameter
 
   // Base WHERE clause
   $where = "WHERE 1=1";
@@ -804,6 +818,12 @@ function vdnet_get_rekap_stats($request)
   if (!empty($greeting_filter)) {
     $where .= " AND greeting LIKE %s";
     $where_params[] = '%' . $wpdb->esc_like($greeting_filter) . '%';
+  }
+
+  // Enhanced search for stats - support keyword search
+  if (!empty($search_filter)) {
+    $where .= " AND greeting LIKE %s";
+    $where_params[] = '%' . $wpdb->esc_like($search_filter) . '%';
   }
 
   // Build queries
@@ -852,7 +872,8 @@ function vdnet_get_rekap_stats($request)
     'filters_applied' => [
       'date_from' => $date_from,
       'date_to' => $date_to,
-      'greeting' => $greeting_filter
+      'greeting' => $greeting_filter,
+      'search' => $search_filter
     ]
   ]);
 }
