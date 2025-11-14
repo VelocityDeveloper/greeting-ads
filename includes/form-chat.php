@@ -49,7 +49,7 @@ function chat_form_new($atts)
       </div>
       <div class="jawaban">
         <label class="website-input">
-          <textarea rows="2 min=" 10" class="input-control" id="jenis-website-new" placeholder="Boleh tahu, rencananya ingin membuat website untuk keperluan apa, ya?" required></textarea>
+          <textarea rows="2" min="10" class="input-control" id="jenis-website-new" placeholder="Boleh tahu, rencananya ingin membuat website untuk keperluan apa, ya?" required></textarea>
           <span class="info" id="info-website-new"></span>
           <div class="info-new" id="info-new"></div>
         </label>
@@ -125,20 +125,14 @@ function chat_form_new($atts)
           $("#info-wa-new").text("");
         }
 
-        if (website.length < 27) {
-          $("#info-website-new").text("Minimal 27 karakter").css("color", "red");
-          valid = false;
-          $("#info-new").text("");
-        } else {
-          $("#info-website-new").text("");
-          $("#info-new").text("");
-        }
-
-        if (valid && getCookie("dilarang") !== "true") {
+  
+        // Enable button jika nama dan wa valid (tanpa syarat minimal website)
+        if (nama.length >= 3 && wa.length >= 10 && wa.substring(0, 2) === "08" && getCookie("dilarang") !== "true") {
           $(".button-green")
             .removeClass("disable")
             .addClass("enable")
             .prop("disabled", false);
+          valid = true; // Override valid untuk allow submission
         } else {
           $(".button-green")
             .removeClass("enable")
@@ -194,7 +188,8 @@ function chat_form_new($atts)
               } else if (response.data.ai_result === 'valid') {
                 $("#form-chat-new").trigger("reset");
                 // jika ada cookie dilarang maka datalayer tidak dikirim
-                if (getCookie("dilarang") == null) {
+                // Hanya kirim dataLayer jika website minimal 27 karakter
+                if (getCookie("dilarang") == null && website.length >= 27) {
                   dataLayer.push({
                     event: 'klik_<?php echo $kondisi_gtag; ?>',
                     button_id: '<?php echo $kondisi_gtag; ?>',
