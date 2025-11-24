@@ -125,7 +125,7 @@ function chat_form_new($atts)
           $("#info-wa-new").text("");
         }
 
-  
+
         // Enable button jika nama dan wa valid (tanpa syarat minimal website)
         if (nama.length >= 3 && wa.length >= 10 && wa.substring(0, 2) === "08" && getCookie("dilarang") !== "true") {
           $(".button-green")
@@ -189,7 +189,7 @@ function chat_form_new($atts)
                 $("#form-chat-new").trigger("reset");
                 // jika ada cookie dilarang maka datalayer tidak dikirim
                 // Hanya kirim dataLayer jika website minimal 27 karakter
-                if (getCookie("dilarang") == null && website.length >= 27) {
+                if (getCookie("dilarang") == null && website.length >= 10) {
                   dataLayer.push({
                     event: 'klik_<?php echo $kondisi_gtag; ?>',
                     button_id: '<?php echo $kondisi_gtag; ?>',
