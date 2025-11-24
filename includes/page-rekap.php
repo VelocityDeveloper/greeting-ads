@@ -416,8 +416,8 @@ function velocity_render_admin_page()
 
     <script>
       jQuery(document).ready(function($) {
-        // Inline edit for status
-        $('.status-cell').on('click', function(e) {
+        // Inline edit for status - use event delegation for dynamic elements
+        $(document).on('click', '.status-cell', function(e) {
           e.stopPropagation();
           var $cell = $(this);
           var $select = $cell.find('.status-select');
@@ -437,8 +437,8 @@ function velocity_render_admin_page()
           $select.focus();
         });
 
-        // Handle status change
-        $('.status-select').on('change', function() {
+        // Handle status change - use event delegation for dynamic elements
+        $(document).on('change', '.status-select', function() {
           var $select = $(this);
           var status = $select.val();
           var id = $select.data('id');
@@ -456,8 +456,8 @@ function velocity_render_admin_page()
             },
             success: function(response) {
               if (response.success) {
-                // Update display with new status
-                $cell.html(formatStatusDisplay(status));
+                // Update display with new status and recreate the cell structure
+                $cell.html(formatStatusDisplay(status, id));
                 // Show success notification
                 showNotification('Status berhasil diperbarui', 'success');
               } else {
@@ -484,17 +484,37 @@ function velocity_render_admin_page()
         });
 
         // Helper function to format status display
-        function formatStatusDisplay(status) {
+        function formatStatusDisplay(status, id) {
+          var statusHtml = '';
           switch (status) {
             case 'sesuai':
-              return '<span style="color: green;">✅ Sesuai</span>';
+              statusHtml = '<span style="color: green;">✅ Sesuai</span>';
+              break;
             case 'salah sambung':
-              return '<span style="color: orange;">🔄 Salah Sambung</span>';
+              statusHtml = '<span style="color: orange;">🔄 Salah Sambung</span>';
+              break;
             case 'tidak ada nomor':
-              return '<span style="color: red;">❌ Tidak Ada Nomor</span>';
+              statusHtml = '<span style="color: red;">❌ Tidak Ada Nomor</span>';
+              break;
             default:
-              return '<span style="color: gray;">❓</span>';
+              statusHtml = '<span style="color: gray;">❓</span>';
+              break;
           }
+
+          // Return complete cell HTML with both display and select
+          var selectedSesuai = status === 'sesuai' ? 'selected' : '';
+          var selectedSalah = status === 'salah sambung' ? 'selected' : '';
+          var selectedTidak = status === 'tidak ada nomor' ? 'selected' : '';
+
+          return '<div class="status-cell" data-id="' + id + '">' +
+            statusHtml +
+            '<select class="status-select" style="display:none;" data-id="' + id + '">' +
+            '<option value="">Pilih Status</option>' +
+            '<option value="sesuai" ' + selectedSesuai + '>Sesuai</option>' +
+            '<option value="salah sambung" ' + selectedSalah + '>Salah Sambung</option>' +
+            '<option value="tidak ada nomor" ' + selectedTidak + '>Tidak Ada Nomor</option>' +
+            '</select>' +
+            '</div>';
         }
 
         // Notification helper
