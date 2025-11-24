@@ -33,6 +33,7 @@ function velocity_render_admin_page()
       'utm_content' => sanitize_text_field($_POST['utm_content']),
       'utm_medium' => sanitize_text_field($_POST['utm_medium']),
       'greeting' => sanitize_text_field($_POST['greeting']),
+      'status' => sanitize_text_field($_POST['status']),
     ];
 
     if (!empty($_POST['id'])) {
@@ -89,6 +90,29 @@ function velocity_render_admin_page()
   ));
 ?>
   <div class="wrap">
+    <style>
+      .status-cell {
+        cursor: pointer;
+        position: relative;
+        min-width: 120px;
+      }
+
+      .status-cell:hover {
+        background-color: #f9f9f9;
+      }
+
+      .status-select {
+        width: 100%;
+        max-width: 150px;
+      }
+
+      .status-cell span {
+        display: inline-block;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+    </style>
+
     <?php if ($edit_data): ?>
       <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -134,6 +158,17 @@ function velocity_render_admin_page()
               <th><label for="greeting">Greeting</label></th>
               <td><input name="greeting" type="text" class="regular-text" value="<?php echo esc_attr($edit_data->greeting ?? ''); ?>"></td>
             </tr>
+            <tr>
+              <th><label for="status">Status</label></th>
+              <td>
+                <select name="status" class="regular-text">
+                  <option value="">Pilih Status</option>
+                  <option value="sesuai" <?php echo (isset($edit_data->status) && $edit_data->status === 'sesuai') ? 'selected' : ''; ?>>Sesuai</option>
+                  <option value="salah sambung" <?php echo (isset($edit_data->status) && $edit_data->status === 'salah sambung') ? 'selected' : ''; ?>>Salah Sambung</option>
+                  <option value="tidak ada nomor" <?php echo (isset($edit_data->status) && $edit_data->status === 'tidak ada nomor') ? 'selected' : ''; ?>>Tidak Ada Nomor</option>
+                </select>
+              </td>
+            </tr>
           </table>
           <?php submit_button($edit_data ? 'Update' : 'Tambah'); ?>
         </form>
@@ -160,8 +195,7 @@ function velocity_render_admin_page()
           id="filter_greeting"
           value="<?php echo htmlspecialchars($selected_greeting); ?>"
           placeholder="Contoh: v5008"
-          style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 200px;"
-        >
+          style="padding: 5px; border: 1px solid #ccc; border-radius: 3px; width: 200px;">
         <button type="submit" class="button button-primary">Filter</button>
         <button type="button" class="button" onclick="clearFilter()">Clear</button>
       </form>
@@ -203,6 +237,7 @@ function velocity_render_admin_page()
             <th>UTM Content</th>
             <th>UTM Medium</th>
             <th>Greeting</th>
+            <th>Hasil Check CS</th>
             <th>Tanggal</th>
             <th>Aksi</th>
           </tr>
@@ -224,6 +259,17 @@ function velocity_render_admin_page()
                 <td><?php echo esc_html($row->utm_content); ?></td>
                 <td><?php echo esc_html($row->utm_medium); ?></td>
                 <td><?php echo esc_html($row->greeting); ?></td>
+                <td>
+                  <div class="status-cell" data-id="<?php echo intval($row->id); ?>">
+                    <?php echo format_status($row->status); ?>
+                    <select class="status-select" style="display:none;" data-id="<?php echo intval($row->id); ?>">
+                      <option value="">Pilih Status</option>
+                      <option value="sesuai" <?php echo (isset($row->status) && $row->status === 'sesuai') ? 'selected' : ''; ?>>Sesuai</option>
+                      <option value="salah sambung" <?php echo (isset($row->status) && $row->status === 'salah sambung') ? 'selected' : ''; ?>>Salah Sambung</option>
+                      <option value="tidak ada nomor" <?php echo (isset($row->status) && $row->status === 'tidak ada nomor') ? 'selected' : ''; ?>>Tidak Ada Nomor</option>
+                    </select>
+                  </div>
+                </td>
                 <td><?php echo esc_html($row->created_at); ?></td>
                 <td>
                   <a href="?page=rekap-chat-form&edit=<?php echo intval($row->id); ?>">Edit</a> |
@@ -233,7 +279,7 @@ function velocity_render_admin_page()
             <?php endforeach;
           else: ?>
             <tr>
-              <td colspan="10">
+              <td colspan="11">
                 <?php if (!empty($selected_greeting)): ?>
                   Tidak ada data dengan greeting "<strong><?php echo htmlspecialchars($selected_greeting); ?></strong>".
                   <br><a href="?page=rekap-chat-form">Tampilkan semua data</a>
@@ -368,6 +414,102 @@ function velocity_render_admin_page()
       });
     </script>
 
+    <script>
+      jQuery(document).ready(function($) {
+        // Inline edit for status
+        $('.status-cell').on('click', function(e) {
+          e.stopPropagation();
+          var $cell = $(this);
+          var $select = $cell.find('.status-select');
+          var $display = $cell.find('span').eq(0); // First span for status display
+
+          if ($select.is(':visible')) {
+            return; // Already in edit mode
+          }
+
+          // Show select, hide display
+          $select.show();
+          if ($display.length) {
+            $display.hide();
+          }
+
+          // Focus on select
+          $select.focus();
+        });
+
+        // Handle status change
+        $('.status-select').on('change', function() {
+          var $select = $(this);
+          var status = $select.val();
+          var id = $select.data('id');
+          var $cell = $select.closest('.status-cell');
+
+          // Update via AJAX
+          $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+              action: 'update_inline_status',
+              id: id,
+              status: status,
+              _wpnonce: '<?php echo wp_create_nonce("update_inline_status_nonce"); ?>'
+            },
+            success: function(response) {
+              if (response.success) {
+                // Update display with new status
+                $cell.html(formatStatusDisplay(status));
+                // Show success notification
+                showNotification('Status berhasil diperbarui', 'success');
+              } else {
+                showNotification('Gagal memperbarui status', 'error');
+                // Hide select, show original display
+                $select.hide();
+                $cell.find('span').show();
+              }
+            },
+            error: function() {
+              showNotification('Terjadi kesalahan saat memperbarui status', 'error');
+              $select.hide();
+              $cell.find('span').show();
+            }
+          });
+        });
+
+        // Hide select when clicking outside
+        $(document).on('click', function(e) {
+          if (!$(e.target).closest('.status-cell').length) {
+            $('.status-select').hide();
+            $('.status-cell span').show();
+          }
+        });
+
+        // Helper function to format status display
+        function formatStatusDisplay(status) {
+          switch (status) {
+            case 'sesuai':
+              return '<span style="color: green;">✅ Sesuai</span>';
+            case 'salah sambung':
+              return '<span style="color: orange;">🔄 Salah Sambung</span>';
+            case 'tidak ada nomor':
+              return '<span style="color: red;">❌ Tidak Ada Nomor</span>';
+            default:
+              return '<span style="color: gray;">❓</span>';
+          }
+        }
+
+        // Notification helper
+        function showNotification(message, type) {
+          var notification = $('<div class="notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
+          $('.wrap h1').after(notification);
+          setTimeout(function() {
+            notification.fadeOut(function() {
+              $(this).remove();
+            });
+          }, 3000);
+        }
+      });
+    </script>
+
   </div>
 <?php
 }
@@ -400,4 +542,18 @@ function format_ai_result($status)
     return '<span class="ai-status unknown" style="color:gray;">❓</span>';
   }
   return '';
+}
+
+function format_status($status)
+{
+  switch (strtolower(trim($status))) {
+    case 'sesuai':
+      return '<span style="color: green;">✅ Sesuai</span>';
+    case 'salah sambung':
+      return '<span style="color: orange;">🔄 Salah Sambung</span>';
+    case 'tidak ada nomor':
+      return '<span style="color: red;">❌ Tidak Ada Nomor</span>';
+    default:
+      return '<span style="color: gray;">❓</span>';
+  }
 }

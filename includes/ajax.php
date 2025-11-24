@@ -145,3 +145,36 @@ function cek_jenis_website_ai_handler()
   echo '<div class="updated"><ul><li>' . implode('</li><li>', $responses) . '</li></ul></div>';
   wp_die();
 }
+
+add_action('wp_ajax_update_inline_status', 'update_inline_status_handler');
+function update_inline_status_handler()
+{
+  check_ajax_referer('update_inline_status_nonce');
+
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  $id = intval($_POST['id']);
+  $status = sanitize_text_field($_POST['status']);
+
+  if (empty($id)) {
+    wp_send_json_error('ID tidak valid.');
+    return;
+  }
+
+  // Update status in database
+  $result = $wpdb->update(
+    $table_name,
+    ['status' => $status],
+    ['id' => $id],
+    ['%s'],
+    ['%d']
+  );
+
+  if ($result === false) {
+    wp_send_json_error('Gagal memperbarui status di database.');
+    return;
+  }
+
+  wp_send_json_success(['status' => $status]);
+}
