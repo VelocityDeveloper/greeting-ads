@@ -37,6 +37,12 @@ function register_greeting_api()
     'callback' => 'test_validation_stats',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/form-data', [
+    'methods' => 'GET',
+    'callback' => 'get_form_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -168,65 +174,74 @@ function get_all_greeting_data($request)
 function get_sync_greeting_data($request)
 {
   global $wpdb;
-  $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
-  
+  $greeting_table = $wpdb->prefix . GREETING_ADS_TABLE;
+  $rekap_table = $wpdb->prefix . 'rekap_form';
+
   // Format parameter - json, csv, xml (default: json)
   $format = $request->get_param('format') ?: 'json';
-  
+
   // Limit parameter untuk mencegah overload (default: no limit, max: 10000)
   $limit = $request->get_param('limit');
   if ($limit && $limit > 10000) {
     $limit = 10000;
   }
-  
-  // Base query
-  $query = "SELECT * FROM $table_name WHERE 1=1";
+
+  // Use LEFT JOIN to get data from rekap_form table with device info
+  // Base query - prioritize rekap_form data since it has device info
+  $query = "SELECT
+    r.id, r.nama, r.no_whatsapp, r.jenis_website, r.via as perangkat,
+    r.utm_content, r.utm_medium, r.greeting, r.status, r.ai_result, r.created_at,
+    g.kata_kunci, g.grup_iklan, g.id_grup_iklan, g.nomor_kata_kunci
+    FROM $rekap_table r
+    LEFT JOIN $greeting_table g ON r.greeting = g.greeting
+    WHERE 1=1";
+
   $query_params = [];
-  
+
   // Filter berdasarkan ID range untuk chunked sync
   $id_from = $request->get_param('id_from');
   $id_to = $request->get_param('id_to');
-  
+
   if ($id_from) {
-    $query .= " AND id >= %d";
+    $query .= " AND r.id >= %d";
     $query_params[] = (int)$id_from;
   }
-  
+
   if ($id_to) {
-    $query .= " AND id <= %d";
+    $query .= " AND r.id <= %d";
     $query_params[] = (int)$id_to;
   }
-  
+
   // Order by ID untuk konsistensi
-  $query .= " ORDER BY id ASC";
-  
+  $query .= " ORDER BY r.id DESC";
+
   // Add limit if specified
   if ($limit) {
     $query .= " LIMIT %d";
     $query_params[] = (int)$limit;
   }
-  
+
   // Execute query
   if (!empty($query_params)) {
     $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
   } else {
     $data = $wpdb->get_results($query, ARRAY_A);
   }
-  
+
   // Get total count
-  $count_query = "SELECT COUNT(*) FROM $table_name WHERE 1=1";
+  $count_query = "SELECT COUNT(*) FROM $rekap_table WHERE 1=1";
   $count_params = [];
-  
+
   if ($id_from) {
     $count_query .= " AND id >= %d";
     $count_params[] = (int)$id_from;
   }
-  
+
   if ($id_to) {
     $count_query .= " AND id <= %d";
     $count_params[] = (int)$id_to;
   }
-  
+
   if (!empty($count_params)) {
     $total_records = $wpdb->get_var($wpdb->prepare($count_query, $count_params));
   } else {
@@ -366,6 +381,72 @@ function get_greeting_validation_stats($request)
     'total' => count($records),
     'data' => $records
   ]);
+}
+
+function get_form_data($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  // Pagination parameters
+  $page = max(1, (int)$request->get_param('page'));
+  $per_page = min(100, max(1, (int)$request->get_param('per_page') ?: 50));
+  $offset = ($page - 1) * $per_page;
+
+  // Filter parameters
+  $greeting = $request->get_param('greeting');
+  $search = $request->get_param('search');
+
+  // Base query
+  $query = "SELECT * FROM $table_name WHERE 1=1";
+  $query_params = [];
+
+  // Build WHERE conditions
+  if (!empty($greeting)) {
+    $query .= " AND greeting LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($greeting) . '%';
+  }
+
+  // Global search across relevant fields
+  if (!empty($search)) {
+    $query .= " AND (nama LIKE %s OR no_whatsapp LIKE %s OR jenis_website LIKE %s OR greeting LIKE %s)";
+    $search_term = '%' . $wpdb->esc_like($search) . '%';
+    $query_params = array_merge($query_params, [$search_term, $search_term, $search_term, $search_term]);
+  }
+
+  // Count total records for pagination
+  $count_query = str_replace("SELECT *", "SELECT COUNT(*)", $query);
+  $total_items = 0;
+  if (!empty($query_params)) {
+    $total_items = $wpdb->get_var($wpdb->prepare($count_query, $query_params));
+  } else {
+    $total_items = $wpdb->get_var($count_query);
+  }
+
+  // Add ORDER BY and LIMIT
+  $query .= " ORDER BY id DESC LIMIT %d OFFSET %d";
+  $query_params[] = $per_page;
+  $query_params[] = $offset;
+
+  // Execute main query
+  if (!empty($query_params)) {
+    $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+  } else {
+    $data = $wpdb->get_results($query, ARRAY_A);
+  }
+
+  // Prepare response with pagination info
+  $response_data = [
+    'data' => $data,
+    'pagination' => [
+      'total_items' => (int)$total_items,
+      'total_pages' => ceil($total_items / $per_page),
+      'current_page' => $page,
+      'per_page' => $per_page
+    ]
+  ];
+
+  return rest_ensure_response($response_data);
 }
 
 function test_validation_stats($request)
