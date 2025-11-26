@@ -43,6 +43,12 @@ function register_greeting_api()
     'callback' => 'get_form_data',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/update-status', [
+    'methods' => 'POST',
+    'callback' => 'update_greeting_status',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -447,6 +453,64 @@ function get_form_data($request)
   ];
 
   return rest_ensure_response($response_data);
+}
+
+function update_greeting_status($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  // Get JSON body
+  $body = $request->get_json_params();
+
+  $id = intval($body['id'] ?? 0);
+  $status = sanitize_text_field($body['status'] ?? '');
+
+  if (empty($id)) {
+    return new WP_Error('invalid_id', 'ID is required', ['status' => 400]);
+  }
+
+  if (empty($status)) {
+    return new WP_Error('invalid_status', 'Status is required', ['status' => 400]);
+  }
+
+  // Validate status values
+  $valid_statuses = ['sesuai', 'salah sambung', 'tidak ada nomor'];
+  if (!in_array($status, $valid_statuses)) {
+    return new WP_Error('invalid_status', 'Invalid status value', ['status' => 400]);
+  }
+
+  // Check if record exists
+  $existing = $wpdb->get_row($wpdb->prepare(
+    "SELECT id FROM $table_name WHERE id = %d",
+    $id
+  ));
+
+  if (!$existing) {
+    return new WP_Error('not_found', 'Record not found', ['status' => 404]);
+  }
+
+  // Update status
+  $result = $wpdb->update(
+    $table_name,
+    ['status' => $status],
+    ['id' => $id],
+    ['%s'],
+    ['%d']
+  );
+
+  if ($result === false) {
+    return new WP_Error('update_failed', 'Failed to update status in database', ['status' => 500]);
+  }
+
+  return rest_ensure_response([
+    'success' => true,
+    'message' => 'Status berhasil diperbarui',
+    'data' => [
+      'id' => $id,
+      'status' => $status
+    ]
+  ]);
 }
 
 function test_validation_stats($request)
