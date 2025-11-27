@@ -49,6 +49,12 @@ function register_greeting_api()
     'callback' => 'update_greeting_status',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/get-today', [
+    'methods' => 'GET',
+    'callback' => 'get_today_greeting_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 function validate_greeting_token()
@@ -546,4 +552,106 @@ function test_validation_stats($request)
     'sample_records' => array_slice($records, 0, 3), // First 3 records
     'total_records_in_table' => $wpdb->get_var("SELECT COUNT(*) FROM $table_name")
   ]);
+}
+
+function get_today_greeting_data($request)
+{
+  global $wpdb;
+  $rekap_table = $wpdb->prefix . 'rekap_form';
+  $greeting_table = $wpdb->prefix . 'greeting_ads_data';
+
+  // Get today's date in MySQL format (Y-m-d)
+  $today = current_time('Y-m-d');
+
+  // Pagination parameters
+  $page = max(1, (int)$request->get_param('page'));
+  $per_page = min(100, max(1, (int)$request->get_param('per_page') ?: 50));
+  $offset = ($page - 1) * $per_page;
+
+  // Optional filters
+  $greeting = $request->get_param('greeting');
+  $search = $request->get_param('search');
+
+  // First, get just today's data from rekap_form without JOIN to debug
+  $debug_query = "SELECT COUNT(*) FROM $rekap_table WHERE DATE(created_at) = %s";
+  $debug_count = $wpdb->get_var($wpdb->prepare($debug_query, [$today]));
+
+  // Get sample data to see what's there
+  $sample_query = "SELECT id, greeting, created_at FROM $rekap_table WHERE DATE(created_at) = %s ORDER BY id DESC LIMIT 3";
+  $sample_data = $wpdb->get_results($wpdb->prepare($sample_query, [$today]), ARRAY_A);
+
+  // Base query to get today's data with JOIN to greeting_ads_data
+  $query = "SELECT
+    r.id, r.nama, r.no_whatsapp, r.jenis_website, r.via as perangkat,
+    r.utm_content, r.utm_medium, r.greeting, r.status, r.ai_result, r.created_at,
+    g.kata_kunci, g.grup_iklan, g.id_grup_iklan, g.nomor_kata_kunci
+    FROM $rekap_table r
+    LEFT JOIN $greeting_table g ON r.greeting = g.greeting
+    WHERE DATE(r.created_at) = %s";
+
+  $query_params = [$today];
+
+  // Add greeting filter
+  if (!empty($greeting)) {
+    $query .= " AND r.greeting LIKE %s";
+    $query_params[] = '%' . $wpdb->esc_like($greeting) . '%';
+  }
+
+  // Global search across relevant fields
+  if (!empty($search)) {
+    $query .= " AND (r.nama LIKE %s OR r.no_whatsapp LIKE %s OR r.jenis_website LIKE %s OR r.greeting LIKE %s OR r.status LIKE %s)";
+    $search_term = '%' . $wpdb->esc_like($search) . '%';
+    $query_params = array_merge($query_params, [$search_term, $search_term, $search_term, $search_term, $search_term]);
+  }
+
+  // Count total records for pagination (using simpler query)
+  $count_query = "SELECT COUNT(*) FROM $rekap_table WHERE DATE(created_at) = %s";
+  $count_params = [$today];
+
+  if (!empty($greeting)) {
+    $count_query .= " AND greeting LIKE %s";
+    $count_params[] = '%' . $wpdb->esc_like($greeting) . '%';
+  }
+
+  if (!empty($search)) {
+    $count_query .= " AND (nama LIKE %s OR no_whatsapp LIKE %s OR jenis_website LIKE %s OR greeting LIKE %s OR status LIKE %s)";
+    $search_term = '%' . $wpdb->esc_like($search) . '%';
+    $count_params = array_merge($count_params, [$search_term, $search_term, $search_term, $search_term, $search_term]);
+  }
+
+  // Get total count
+  $total_items = $wpdb->get_var($wpdb->prepare($count_query, $count_params));
+
+  // Add ORDER BY and LIMIT to main query
+  $query .= " ORDER BY r.id DESC LIMIT %d OFFSET %d";
+  $query_params[] = $per_page;
+  $query_params[] = $offset;
+
+  // Execute main query
+  $data = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+
+  // Prepare response with pagination info and debug info
+  $response_data = [
+    'success' => true,
+    'date' => $today,
+    'data' => $data,
+    'debug' => [
+      'raw_count_today' => (int)$debug_count,
+      'sample_data' => $sample_data,
+      'query_executed' => $query,
+      'query_params' => $query_params
+    ],
+    'pagination' => [
+      'total_items' => (int)$total_items,
+      'total_pages' => ceil($total_items / $per_page),
+      'current_page' => $page,
+      'per_page' => $per_page
+    ],
+    'stats' => [
+      'total_today' => (int)$total_items,
+      'query_date' => $today
+    ]
+  ];
+
+  return rest_ensure_response($response_data);
 }
