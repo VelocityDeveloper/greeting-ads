@@ -56,6 +56,12 @@ function register_vdnet_api()
     'callback' => 'vdnet_get_rekap_stats',
     'permission_callback' => 'validate_greeting_token'
   ]);
+
+  register_rest_route('greeting/v1', '/rekap', [
+    'methods' => 'GET',
+    'callback' => 'vdnet_get_rekap_data',
+    'permission_callback' => 'validate_greeting_token'
+  ]);
 }
 
 /**
@@ -876,4 +882,132 @@ function vdnet_get_rekap_stats($request)
       'search' => $search_filter
     ]
   ]);
+}
+
+/**
+ * Get rekap data with 'full' or 'today' options
+ * Endpoint: /wp-json/greeting/v1/rekap?type=full|today
+ */
+function vdnet_get_rekap_data($request)
+{
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'rekap_form';
+
+  // Check if created_at column exists, if not add it
+  $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'created_at'");
+  if (!$column_exists) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+  }
+
+  // Get the type parameter (full or today)
+  $type = $request->get_param('type');
+
+  if (empty($type)) {
+    return new WP_Error('missing_type', 'Type parameter is required (full or today)', ['status' => 400]);
+  }
+
+  if (!in_array($type, ['full', 'today'])) {
+    return new WP_Error('invalid_type', 'Type must be either "full" or "today"', ['status' => 400]);
+  }
+
+  // Build query based on type
+  if ($type === 'today') {
+    // Get today's data
+    $query = "SELECT * FROM $table_name WHERE DATE(created_at) = CURDATE()";
+  } else {
+    // Get all data
+    $query = "SELECT * FROM $table_name";
+  }
+
+  // Additional filters (optional)
+  $where_params = [];
+
+  // Filter by greeting if provided
+  $greeting_filter = $request->get_param('greeting');
+  if (!empty($greeting_filter)) {
+    $query .= " AND greeting LIKE %s";
+    $where_params[] = '%' . $wpdb->esc_like($greeting_filter) . '%';
+  }
+
+  // Filter by status if provided
+  $status_filter = $request->get_param('status');
+  if (!empty($status_filter)) {
+    $query .= " AND status = %s";
+    $where_params[] = sanitize_text_field($status_filter);
+  }
+
+  // Order by created_at descending (latest first)
+  $query .= " ORDER BY created_at DESC";
+
+  // For full data, add limit to prevent memory issues
+  if ($type === 'full') {
+    $per_page = $request->get_param('per_page') ?: 1000; // Default 1000, max 5000
+    $per_page = min(5000, max(1, (int)$per_page));
+    $page = max(1, (int)($request->get_param('page') ?: 1));
+    $offset = ($page - 1) * $per_page;
+
+    $query .= " LIMIT %d OFFSET %d";
+    $where_params[] = $per_page;
+    $where_params[] = $offset;
+  }
+
+  // Execute query
+  if (!empty($where_params)) {
+    $data = $wpdb->get_results($wpdb->prepare($query, $where_params), ARRAY_A);
+  } else {
+    $data = $wpdb->get_results($query, ARRAY_A);
+  }
+
+  // Get total count for pagination info
+  $count_query = "SELECT COUNT(*) FROM $table_name";
+  if ($type === 'today') {
+    $count_query .= " WHERE DATE(created_at) = CURDATE()";
+  }
+
+  // Apply same filters to count query
+  $count_where_params = [];
+  if (!empty($greeting_filter)) {
+    $count_query .= " AND greeting LIKE %s";
+    $count_where_params[] = '%' . $wpdb->esc_like($greeting_filter) . '%';
+  }
+
+  if (!empty($status_filter)) {
+    $count_query .= " AND status = %s";
+    $count_where_params[] = sanitize_text_field($status_filter);
+  }
+
+  if (!empty($count_where_params)) {
+    $total_items = $wpdb->get_var($wpdb->prepare($count_query, $count_where_params));
+  } else {
+    $total_items = $wpdb->get_var($count_query);
+  }
+
+  // Prepare response
+  $response_data = [
+    'success' => true,
+    'type' => $type,
+    'data' => $data,
+    'count' => count($data),
+    'total_records' => (int)$total_items,
+    'query_date' => current_time('Y-m-d H:i:s'),
+    'filters' => [
+      'greeting' => $greeting_filter,
+      'status' => $status_filter
+    ]
+  ];
+
+  // Add pagination info for full data
+  if ($type === 'full') {
+    $per_page = $request->get_param('per_page') ?: 1000;
+    $page = max(1, (int)($request->get_param('page') ?: 1));
+
+    $response_data['pagination'] = [
+      'current_page' => $page,
+      'per_page' => $per_page,
+      'total_pages' => ceil($total_items / $per_page),
+      'has_more' => ($page * $per_page) < $total_items
+    ];
+  }
+
+  return rest_ensure_response($response_data);
 }
