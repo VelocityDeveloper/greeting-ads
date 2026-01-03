@@ -56,10 +56,11 @@ function rekap_chat_form()
       'utm_content' => $utm_content,
       'utm_medium' => $utm_medium,
       'greeting' => $greeting,
+      'gclid' => $gclid ?? null,
       'created_at' => current_time('mysql'),
     ]
   );
-	
+
   // kirim log ke telegram jika ada mysql error
   if ($wpdb->last_error) {
     $id_reports = [

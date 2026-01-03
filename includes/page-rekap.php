@@ -159,6 +159,10 @@ function velocity_render_admin_page()
               <td><input name="greeting" type="text" class="regular-text" value="<?php echo esc_attr($edit_data->greeting ?? ''); ?>"></td>
             </tr>
             <tr>
+              <th><label for="gclid">GCLID</label></th>
+              <td><input name="gclid" type="text" class="regular-text" value="<?php echo esc_attr($edit_data->gclid ?? ''); ?>"></td>
+            </tr>
+            <tr>
               <th><label for="status">Status</label></th>
               <td>
                 <select name="status" class="regular-text">
@@ -237,6 +241,7 @@ function velocity_render_admin_page()
             <th>UTM Content</th>
             <th>UTM Medium</th>
             <th>Greeting</th>
+            <th>GCLID</th>
             <th>Hasil Check CS</th>
             <th>Tanggal</th>
             <th>Aksi</th>
@@ -259,6 +264,7 @@ function velocity_render_admin_page()
                 <td><?php echo esc_html($row->utm_content); ?></td>
                 <td><?php echo esc_html($row->utm_medium); ?></td>
                 <td><?php echo esc_html($row->greeting); ?></td>
+                <td><?php echo esc_html($row->gclid); ?></td>
                 <td>
                   <div class="status-cell" data-id="<?php echo intval($row->id); ?>">
                     <?php echo format_status($row->status); ?>
