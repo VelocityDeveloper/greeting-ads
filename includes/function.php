@@ -192,6 +192,13 @@ function kirim_telegram($message, array $chatIds)
  */
 function validasi_jenis_web($input)
 {
+  // TOGGLE: Ubah ke true jika ingin mengaktifkan validasi AI kembali
+  $gunakan_validasi_ai = false;
+
+  if (!$gunakan_validasi_ai) {
+    return 'valid';
+  }
+
   $apiKey = get_option('openai_api_key');
   //skrip asli>> $prompt = get_option('prompt_jenis_web');
   // skrip toro>>
