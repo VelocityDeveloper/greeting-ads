@@ -191,8 +191,10 @@ function chat_form_new($atts)
                 // Hanya kirim dataLayer jika website minimal 27 karakter
                 if (getCookie("dilarang") == null && website.length >= 10) {
                   // dataLayer.push({
-                  //   event: 'klik_<?php echo $kondisi_gtag; ?>',
-                  //   button_id: '<?php echo $kondisi_gtag; ?>',
+                  //   event: 'klik_<?php //echo $kondisi_gtag; 
+                                    ?>',
+                  //   button_id: '<?php //echo $kondisi_gtag; 
+                                    ?>',
                   //   nama: nama,
                   //   no_whatsapp: whatsapp,
                   //   jenis_website: website
