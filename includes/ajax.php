@@ -28,9 +28,9 @@ function rekap_chat_form()
     . "No. WhatsApp: <b>{$no_whatsapp}</b>\n"
     . "Jenis Web: <b>{$jenis_website}</b>\n"
     . "Greeting: <b>{$greeting}</b>\n"
-    . "Sumber: <b>{$sumber}</b>\n\n"
-    . "gclid: <b>{$gclid}</b>\n\n"
-    . "label: <b>{$label}</b>\n";
+    . "Sumber: <b>{$sumber}</b>\n"
+    . "label: <b>{$label}</b>\n\n"
+    . "gclid: <b>{$gclid}</b>\n";
 
   $chatIds = [
     // '184441126', //contoh: hp cs
