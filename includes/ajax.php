@@ -16,6 +16,8 @@ function rekap_chat_form()
   $utm_content = $_COOKIE['utm_content'] ?? '';
   $utm_medium = $_COOKIE['utm_medium'] ?? '';
   $gclid = $_COOKIE['_gcl_aw'] ?? '';
+  $label = $_COOKIE['label'] ?? '';
+
   $greeting = $_COOKIE['greeting'] ?? 'vx';
   $greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $greeting : 'v0';
   $sumber = ($greeting == 'v0') ? 'WA2' : 'WA ADS';
@@ -28,6 +30,11 @@ function rekap_chat_form()
     . "Greeting: <b>{$greeting}</b>\n"
     . "Sumber: <b>{$sumber}</b>\n\n"
     . "gclid: <b>{$gclid}</b>\n";
+
+  //jika ada label, tambahkan ke messageText
+  if ($label) {
+    $messageText .= "Label: <b>{$label}</b>\n";
+  }
 
   $chatIds = [
     // '184441126', //contoh: hp cs
@@ -57,6 +64,7 @@ function rekap_chat_form()
       'utm_medium' => $utm_medium,
       'greeting' => $greeting,
       'gclid' => $gclid ?? null,
+      'label' => $label ?? null,
       'created_at' => current_time('mysql'),
     ]
   );
