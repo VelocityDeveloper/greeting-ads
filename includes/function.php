@@ -103,6 +103,20 @@ function save_utm_cookies()
         'samesite' => 'Lax'
       ]);
     }
+
+    // Sanitasi nilai parameter
+    $label = sanitize_text_field($_GET['label']);
+    if ($label) {
+      // Set cookie label
+      setcookie('label', $label, [
+        'expires' => $expiration,
+        'path' => $path,
+        'domain' => $domain,
+        'secure' => $secure,
+        'httponly' => $httponly,
+        'samesite' => 'Lax'
+      ]);
+    }
   }
 }
 add_action('init', 'save_utm_cookies');
