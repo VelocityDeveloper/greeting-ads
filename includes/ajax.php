@@ -29,12 +29,8 @@ function rekap_chat_form()
     . "Jenis Web: <b>{$jenis_website}</b>\n"
     . "Greeting: <b>{$greeting}</b>\n"
     . "Sumber: <b>{$sumber}</b>\n\n"
-    . "gclid: <b>{$gclid}</b>\n";
-
-  //jika ada label, tambahkan ke messageText
-  if ($label) {
-    $messageText .= "Label: <b>{$label}</b>\n";
-  }
+    . "gclid: <b>{$gclid}</b>\n\n"
+    . "label: <b>{$label}</b>\n";
 
   $chatIds = [
     // '184441126', //contoh: hp cs
