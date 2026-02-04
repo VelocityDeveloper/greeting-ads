@@ -22,6 +22,14 @@ function chat_form_new($atts)
   $c_greeting = $greeting_check ?? $greeting_cookie;
   // $c_greeting = ($_COOKIE['greeting'] || $greeting_check) ?? 'vx';
   $c_greeting = (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) ? $c_greeting : 'v0';
+
+  //label
+  $label = $_COOKIE['label'] ?? '';
+  //jika ada label, tambahkan ke c_greeting
+  if ($label) {
+    $c_greeting .= "/{$label}";
+  }
+
   $default_greeting = 'Hallo, Saya tertarik buat website jeniswebsite [' . $c_greeting . ']. Mohon infonya.';
 
   // Pakai URL dari shortcode jika ada, jika tidak pakai default WA
