@@ -12,10 +12,35 @@ function greeting_ads_import_csv()
     // Lewati baris header
     fgetcsv($handle);
 
+    // Dapatkan nilai counter greeting format 'vXXX' tertinggi saat ini
+    $max_v_number = $wpdb->get_var("
+      SELECT MAX(CAST(SUBSTRING(greeting, 2) AS UNSIGNED)) 
+      FROM $table_name 
+      WHERE greeting REGEXP '^v[0-9]+$'
+    ");
+    $current_v_counter = intval($max_v_number); // Akan 0 jika null
+
     while (($data = fgetcsv($handle, 1000, ',')) !== false) {
+      $greeting_input = isset($data[4]) ? sanitize_text_field($data[4]) : '';
+
+      // Logika auto-increment greeting vXXX jika kosong
+      if (empty($greeting_input)) {
+        $current_v_counter++;
+        $greeting_input = 'v' . $current_v_counter;
+      } else {
+        // Jika user mengisi greeting dengan format vXXX, update counter agar tidak bentrok
+        if (preg_match('/^v(\d+)$/', $greeting_input, $matches)) {
+          $val = intval($matches[1]);
+          if ($val > $current_v_counter) {
+            $current_v_counter = $val;
+          }
+        }
+      }
+
       // Periksa apakah greeting sudah ada di database
-      $existing_greeting = $wpdb->get_var("SELECT greeting FROM $table_name WHERE greeting = '" . sanitize_text_field($data[4]) . "'");
+      $existing_greeting = $wpdb->get_var("SELECT greeting FROM $table_name WHERE kata_kunci = '" . sanitize_text_field($data[0]) . "' AND grup_iklan = '" . sanitize_text_field($data[1]) . "' AND nomor_kata_kunci = '" . sanitize_text_field($data[3]) . "' ");
       if (empty($existing_greeting)) {
+
         // Jika greeting belum ada, insert data
         $wpdb->insert(
           $table_name,
@@ -24,7 +49,7 @@ function greeting_ads_import_csv()
             'grup_iklan' => sanitize_text_field($data[1]),
             'id_grup_iklan' => sanitize_text_field($data[2]),
             'nomor_kata_kunci' => sanitize_text_field($data[3]),
-            'greeting' => sanitize_text_field($data[4]),
+            'greeting' => $greeting_input,
           )
         );
       }
