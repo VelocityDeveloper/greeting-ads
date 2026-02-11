@@ -104,13 +104,14 @@ function vdnet_insert_greeting_data($request)
 
   // Check for duplicate entry
   $exists = $wpdb->get_var($wpdb->prepare(
-    "SELECT COUNT(*) FROM $table_name WHERE id_grup_iklan = %s AND nomor_kata_kunci = %s",
+    "SELECT COUNT(*) FROM $table_name WHERE id_grup_iklan = %s AND nomor_kata_kunci = %s AND kata_kunci = %s",
     $data['id_grup_iklan'],
-    $data['nomor_kata_kunci']
+    $data['nomor_kata_kunci'],
+    $data['kata_kunci']
   ));
 
   if ($exists > 0) {
-    return new WP_Error('duplicate_entry', 'Data with this id_grup_iklan and nomor_kata_kunci already exists', ['status' => 409]);
+    return new WP_Error('duplicate_entry', 'Data with this id_grup_iklan, nomor_kata_kunci and kata_kunci already exists', ['status' => 409]);
   }
 
   // Insert data
@@ -186,9 +187,10 @@ function vdnet_bulk_insert_greeting_data($request)
     // Check for duplicate (optional - can be skipped for performance)
     if (isset($json_data['skip_duplicates']) && $json_data['skip_duplicates']) {
       $exists = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM $table_name WHERE id_grup_iklan = %s AND nomor_kata_kunci = %s",
+        "SELECT COUNT(*) FROM $table_name WHERE id_grup_iklan = %s AND nomor_kata_kunci = %s AND kata_kunci = %s",
         $data['id_grup_iklan'],
-        $data['nomor_kata_kunci']
+        $data['nomor_kata_kunci'],
+        $data['kata_kunci']
       ));
 
       if ($exists > 0) {
