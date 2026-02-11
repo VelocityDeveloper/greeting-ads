@@ -395,6 +395,8 @@ if (isset($_GET['edit'])) {
           <input type="file" name="csv_file" accept=".csv" required class="ga-file-input" id="csv-file-input">
         </div>
 
+        <input type="hidden" name="import_csv" value="1">
+
         <div class="ga-modal-actions">
           <button type="button" class="ga-btn ga-btn-secondary" id="import-cancel-btn">Batal</button>
           <button type="submit" name="import_csv" class="ga-btn ga-btn-primary" id="import-submit-btn">
@@ -1384,6 +1386,9 @@ if (isset($_GET['edit'])) {
     importSubmitBtn.disabled = true;
     importSubmitText.style.display = 'none';
     importSubmitLoader.style.display = 'inline-block';
+
+    // Jangan preventDefault() di sini karena kita ingin form submit secara normal (POST request)
+    // yang akan di-handle oleh PHP di bagian atas file ini
   });
 
   // Open modal for editing data
