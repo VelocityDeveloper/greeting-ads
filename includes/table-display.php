@@ -3,8 +3,9 @@ global $wpdb;
 $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
 
 // Handle impor CSV
+$import_report = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_csv'])) {
-  greeting_ads_import_csv();
+  $import_report = greeting_ads_import_csv();
 }
 
 // Handle tambah/edit/hapus data
@@ -88,6 +89,10 @@ if (isset($_GET['edit'])) {
 ?>
 
 <div class="wrap">
+
+  <?php if (!empty($import_report)): ?>
+    <?php echo $import_report; ?>
+  <?php endif; ?>
 
   <div class="card" style="max-width: 100% !important;">
     <div class="ga-search-header">
