@@ -3,6 +3,8 @@ function chat_form_new($atts)
 {
   $atts = shortcode_atts([
     'redirect' => '', // default kosong
+    'walength' => 10, // default 10
+    'weblength' => 10, // default 10
   ], $atts, 'chat-form-new');
 
   ob_start();
@@ -47,7 +49,7 @@ function chat_form_new($atts)
     </label>
 
     <label class="nomor-input">
-      <input type="number" class="input-control" id="input-whatsapp-new" placeholder="No Whatsapp" minlength="10" required>
+      <input type="number" class="input-control" id="input-whatsapp-new" placeholder="No Whatsapp" minlength="<?php echo $atts['walength']; ?>" required>
       <span class="info" id="info-wa-new"></span>
     </label>
 
@@ -57,7 +59,7 @@ function chat_form_new($atts)
       </div>
       <div class="jawaban">
         <label class="website-input">
-          <textarea rows="2" min="10" class="input-control" id="jenis-website-new" placeholder="Boleh tahu, rencananya ingin membuat website untuk keperluan apa, ya?" required></textarea>
+          <textarea rows="2" minlength="<?php echo $atts['weblength']; ?>" class="input-control" id="jenis-website-new" placeholder="Boleh tahu, rencananya ingin membuat website untuk keperluan apa, ya?" required></textarea>
           <span class="info" id="info-website-new"></span>
           <div class="info-new" id="info-new"></div>
         </label>
@@ -105,12 +107,14 @@ function chat_form_new($atts)
 
   <script>
     jQuery(function($) {
+      let webLength = <?php echo $atts['weblength']; ?>;
 
       function validateInputsNew() {
         let nama = $("#input-nama-new").val().trim();
         let wa = $("#input-whatsapp-new").val().trim();
         let website = $("#jenis-website-new").val().trim();
         let valid = true;
+        let waLength = <?php echo $atts['walength']; ?>;
 
         if (nama.length < 3) {
           $("#info-nama-new").text("Nama minimal 3 karakter").css("color", "red");
@@ -120,14 +124,14 @@ function chat_form_new($atts)
         }
 
         // jika wa tidak diawali 08
-        if (wa.substring(0, 2) !== "08" && wa.length > 1 && wa.length < 10) {
-          $("#info-wa-new").html("Nomor WA tidak valid <br> Nomor WA minimal 10 digit").css("color", "red");
+        if (wa.substring(0, 2) !== "08" && wa.length > 1 && wa.length < waLength) {
+          $("#info-wa-new").html("Nomor WA tidak valid <br> Nomor WA minimal " + waLength + " digit").css("color", "red");
           valid = false;
         } else if (wa.substring(0, 2) !== "08" && wa.length > 2) {
           $("#info-wa-new").text("Nomor WA tidak valid").css("color", "red");
           valid = false;
-        } else if (wa.length < 10) {
-          $("#info-wa-new").text("Nomor WA minimal 10 digit").css("color", "red");
+        } else if (wa.length < waLength) {
+          $("#info-wa-new").text("Nomor WA minimal " + waLength + " digit").css("color", "red");
           valid = false;
         } else {
           $("#info-wa-new").text("");
@@ -135,7 +139,7 @@ function chat_form_new($atts)
 
 
         // Enable button jika nama dan wa valid (tanpa syarat minimal website)
-        if (nama.length >= 3 && wa.length >= 10 && wa.substring(0, 2) === "08" && getCookie("dilarang") !== "true") {
+        if (nama.length >= 3 && wa.length >= waLength && wa.substring(0, 2) === "08" && getCookie("dilarang") !== "true") {
           $(".button-green")
             .removeClass("disable")
             .addClass("enable")
@@ -197,15 +201,15 @@ function chat_form_new($atts)
                 $("#form-chat-new").trigger("reset");
                 // jika ada cookie dilarang maka datalayer tidak dikirim
                 // Hanya kirim dataLayer jika website minimal 27 karakter
-                // if (getCookie("dilarang") == null && website.length >= 10) {
-                dataLayer.push({
-                  event: 'klik_<?php echo $kondisi_gtag; ?>',
-                  button_id: '<?php echo $kondisi_gtag; ?>',
-                  nama: nama,
-                  no_whatsapp: whatsapp,
-                  jenis_website: website
-                });
-                // }
+                if (getCookie("dilarang") == null && website.length >= webLength) {
+                  dataLayer.push({
+                    event: 'klik_<?php echo $kondisi_gtag; ?>',
+                    button_id: '<?php echo $kondisi_gtag; ?>',
+                    nama: nama,
+                    no_whatsapp: whatsapp,
+                    jenis_website: website
+                  });
+                }
 
                 setTimeout(function() {
                   var redirectUrl = "<?php echo esc_js($redirect_url); ?>";
