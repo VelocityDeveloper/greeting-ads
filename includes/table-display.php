@@ -201,69 +201,69 @@ if (isset($_GET['edit'])) {
     </div>
     <div class="ga-table-container">
       <table class="ga-table">
-      <thead>
-        <tr>
-          <th class=\"ga-th\">ID</th>
-          <th class=\"ga-th\">Kata Kunci</th>
-          <th class=\"ga-th\">Grup Iklan</th>
-          <th class=\"ga-th\">ID Grup Iklan</th>
-          <th class=\"ga-th\">Nomor Kata Kunci</th>
-          <th class=\"ga-th\">Pesan Greeting</th>
-          <th class=\"ga-th\">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (!empty($data)): ?>
-          <?php foreach ($data as $row): ?>
+        <thead>
+          <tr>
+            <th class=\"ga-th\">ID</th>
+            <th class=\"ga-th\">Kata Kunci</th>
+            <th class=\"ga-th\">Grup Iklan</th>
+            <th class=\"ga-th\">ID Grup Iklan</th>
+            <th class=\"ga-th\">Nomor Kata Kunci</th>
+            <th class=\"ga-th\">Pesan Greeting</th>
+            <th class=\"ga-th\">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (!empty($data)): ?>
+            <?php foreach ($data as $row): ?>
+              <tr class=\"ga-tr\">
+                <td class=\"ga-td\"><?php echo esc_html($row['id']); ?></td>
+                <td class=\"ga-td\"><?php echo esc_html($row['kata_kunci']); ?></td>
+                <td class=\"ga-td\"><?php echo esc_html($row['grup_iklan']); ?></td>
+                <td class=\"ga-td\"><?php echo esc_html($row['id_grup_iklan']); ?></td>
+                <td class=\"ga-td\"><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
+                <td class=\"ga-td ga-greeting-cell\"><?php echo esc_html($row['greeting']); ?></td>
+                <td class="ga-td ga-actions-cell">
+                  <button class="ga-btn ga-btn-secondary ga-btn-sm edit-data-btn"
+                    data-id="<?php echo esc_attr($row['id']); ?>"
+                    data-kata-kunci="<?php echo esc_attr($row['kata_kunci']); ?>"
+                    data-grup-iklan="<?php echo esc_attr($row['grup_iklan']); ?>"
+                    data-id-grup-iklan="<?php echo esc_attr($row['id_grup_iklan']); ?>"
+                    data-nomor-kata-kunci="<?php echo esc_attr($row['nomor_kata_kunci']); ?>"
+                    data-greeting="<?php echo esc_attr($row['greeting']); ?>">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="ga-btn ga-btn-danger ga-btn-sm delete-data" data-id="<?php echo esc_attr($row['id']); ?>">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3,6 5,6 21,6"></polyline>
+                      <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    Hapus
+                  </button>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
             <tr class=\"ga-tr\">
-              <td class=\"ga-td\"><?php echo esc_html($row['id']); ?></td>
-              <td class=\"ga-td\"><?php echo esc_html($row['kata_kunci']); ?></td>
-              <td class=\"ga-td\"><?php echo esc_html($row['grup_iklan']); ?></td>
-              <td class=\"ga-td\"><?php echo esc_html($row['id_grup_iklan']); ?></td>
-              <td class=\"ga-td\"><?php echo esc_html($row['nomor_kata_kunci']); ?></td>
-              <td class=\"ga-td ga-greeting-cell\"><?php echo esc_html($row['greeting']); ?></td>
-              <td class="ga-td ga-actions-cell">
-                <button class="ga-btn ga-btn-secondary ga-btn-sm edit-data-btn"
-                  data-id="<?php echo esc_attr($row['id']); ?>"
-                  data-kata-kunci="<?php echo esc_attr($row['kata_kunci']); ?>"
-                  data-grup-iklan="<?php echo esc_attr($row['grup_iklan']); ?>"
-                  data-id-grup-iklan="<?php echo esc_attr($row['id_grup_iklan']); ?>"
-                  data-nomor-kata-kunci="<?php echo esc_attr($row['nomor_kata_kunci']); ?>"
-                  data-greeting="<?php echo esc_attr($row['greeting']); ?>">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              <td colspan=\"7\" class=\"ga-td ga-empty-state\">
+                <div class=\"ga-empty-content\">
+                  <svg width=\"48\" height=\"48\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"ga-empty-icon\">
+                    <circle cx=\"11\" cy=\"11\" r=\"8\"></circle>
+                    <path d=\"M21 21l-4.35-4.35\"></path>
                   </svg>
-                  Edit
-                </button>
-                <button class="ga-btn ga-btn-danger ga-btn-sm delete-data" data-id="<?php echo esc_attr($row['id']); ?>">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3,6 5,6 21,6"></polyline>
-                    <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                  Hapus
-                </button>
+                  <p>Tidak ada data ditemukan</p>
+                  <p class=\"ga-empty-subtext\">Mulai dengan menambahkan data greeting atau import dari CSV</p>
+                </div>
               </td>
             </tr>
-          <?php endforeach; ?>
-        <?php else: ?>
-          <tr class=\"ga-tr\">
-            <td colspan=\"7\" class=\"ga-td ga-empty-state\">
-              <div class=\"ga-empty-content\">
-                <svg width=\"48\" height=\"48\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"ga-empty-icon\">
-                  <circle cx=\"11\" cy=\"11\" r=\"8\"></circle>
-                  <path d=\"M21 21l-4.35-4.35\"></path>
-                </svg>
-                <p>Tidak ada data ditemukan</p>
-                <p class=\"ga-empty-subtext\">Mulai dengan menambahkan data greeting atau import dari CSV</p>
-              </div>
-            </td>
-          </tr>
-        <?php endif; ?>
-      </tbody>
-    </table>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination -->
@@ -360,7 +360,18 @@ if (isset($_GET['edit'])) {
     </div>
     <div class="ga-modal-body">
       <p class="ga-import-description">Upload file CSV untuk mengimpor data greeting secara massal. Pastikan format file sesuai dengan template yang disediakan.</p>
-      
+
+      <div style="margin-bottom: 1.5rem; text-align: center;">
+        <a href="<?php echo admin_url('admin.php?page=greeting-ads&action=download_csv_template'); ?>" class="ga-btn ga-btn-ghost" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;border: 1px dashed #ccc;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Template CSV
+        </a>
+      </div>
+
       <form id="import-form" method="post" enctype="multipart/form-data">
         <div class="ga-file-upload-area" id="file-drop-area">
           <div class="ga-file-upload-content">
@@ -378,7 +389,7 @@ if (isset($_GET['edit'])) {
           </div>
           <input type="file" name="csv_file" accept=".csv" required class="ga-file-input" id="csv-file-input">
         </div>
-        
+
         <div class="ga-modal-actions">
           <button type="button" class="ga-btn ga-btn-secondary" id="import-cancel-btn">Batal</button>
           <button type="submit" name="import_csv" class="ga-btn ga-btn-primary" id="import-submit-btn">
@@ -420,7 +431,7 @@ if (isset($_GET['edit'])) {
         <h4>Peringatan!</h4>
         <p>Fitur ini akan menghapus SEMUA data greeting yang memiliki nomor kata kunci yang sama. Tindakan ini tidak dapat dibatalkan.</p>
       </div>
-      
+
       <form id="bulk-delete-form">
         <div class="ga-form-group">
           <label for="bulk-delete-keyword-number" class="ga-label">
@@ -1251,7 +1262,7 @@ if (isset($_GET['edit'])) {
   // Modal functionality
   const modal = document.getElementById('data-modal');
   const addBtn = document.getElementById('add-data-btn');
-  
+
   // Import modal functionality
   const importModal = document.getElementById('import-modal');
   const importBtn = document.getElementById('import-csv-btn');
@@ -1581,25 +1592,25 @@ if (isset($_GET['edit'])) {
     formData.append('nomor_kata_kunci', JSON.stringify(keywordLines));
 
     fetch(ajaxurl, {
-      method: 'POST',
-      body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-      previewLoading.style.display = 'none';
-      
-      if (data.success) {
-        const items = data.data.items;
-        const count = data.data.count;
-        const summary = data.data.summary;
-        
-        // Store the actual keyword count for confirmation dialog
-        actualKeywordCount = summary ? summary.length : 0;
-        
-        previewCount.textContent = `${count} data total`;
-        
-        if (items.length > 0) {
-          previewContent.innerHTML = `
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        previewLoading.style.display = 'none';
+
+        if (data.success) {
+          const items = data.data.items;
+          const count = data.data.count;
+          const summary = data.data.summary;
+
+          // Store the actual keyword count for confirmation dialog
+          actualKeywordCount = summary ? summary.length : 0;
+
+          previewCount.textContent = `${count} data total`;
+
+          if (items.length > 0) {
+            previewContent.innerHTML = `
             <div class="ga-preview-items">
               <h5>Sample data yang akan dihapus (max 20 item):</h5>
               ${items.map(item => `
@@ -1611,19 +1622,19 @@ if (isset($_GET['edit'])) {
               `).join('')}
             </div>
           `;
-          bulkDeleteSubmitBtn.disabled = false;
+            bulkDeleteSubmitBtn.disabled = false;
+          } else {
+            previewContent.innerHTML = '<p style="text-align: center; color: #6b7280; margin: 20px 0;">Tidak ada data ditemukan dengan nomor kata kunci tersebut.</p>';
+          }
         } else {
-          previewContent.innerHTML = '<p style="text-align: center; color: #6b7280; margin: 20px 0;">Tidak ada data ditemukan dengan nomor kata kunci tersebut.</p>';
+          previewContent.innerHTML = `<p style="text-align: center; color: #dc2626; margin: 20px 0;">${data.data}</p>`;
         }
-      } else {
-        previewContent.innerHTML = `<p style="text-align: center; color: #dc2626; margin: 20px 0;">${data.data}</p>`;
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      previewLoading.style.display = 'none';
-      previewContent.innerHTML = '<p style="text-align: center; color: #dc2626; margin: 20px 0;">Terjadi kesalahan saat memuat preview.</p>';
-    });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        previewLoading.style.display = 'none';
+        previewContent.innerHTML = '<p style="text-align: center; color: #dc2626; margin: 20px 0;">Terjadi kesalahan saat memuat preview.</p>';
+      });
   });
 
   // Handle bulk delete form submission
@@ -1662,28 +1673,28 @@ if (isset($_GET['edit'])) {
     formData.append('nomor_kata_kunci', JSON.stringify(keywordLines));
 
     fetch(ajaxurl, {
-      method: 'POST',
-      body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert(data.data);
-        closeBulkDeleteModal();
-        location.reload();
-      } else {
-        alert(data.data);
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.data);
+          closeBulkDeleteModal();
+          location.reload();
+        } else {
+          alert(data.data);
+          bulkDeleteSubmitBtn.disabled = false;
+          bulkDeleteSubmitText.style.display = 'inline-flex';
+          bulkDeleteSubmitLoader.style.display = 'none';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menghapus data.');
         bulkDeleteSubmitBtn.disabled = false;
         bulkDeleteSubmitText.style.display = 'inline-flex';
         bulkDeleteSubmitLoader.style.display = 'none';
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Terjadi kesalahan saat menghapus data.');
-      bulkDeleteSubmitBtn.disabled = false;
-      bulkDeleteSubmitText.style.display = 'inline-flex';
-      bulkDeleteSubmitLoader.style.display = 'none';
-    });
+      });
   });
 </script>

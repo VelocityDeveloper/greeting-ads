@@ -34,3 +34,18 @@ function greeting_ads_import_csv()
     echo '<div class="notice notice-success"><p>Data berhasil diimpor!</p></div>';
   }
 }
+
+// Handle download template
+if (isset($_GET['action']) && $_GET['action'] == 'download_csv_template') {
+  header('Content-Type: text/csv');
+  header('Content-Disposition: attachment; filename="greeting_ads_template.csv"');
+
+  $output = fopen('php://output', 'w');
+  fputcsv($output, array('Kata Kunci', 'Grup Iklan', 'ID Grup Iklan', 'Nomor Kata Kunci', 'Greeting'));
+
+  // Contoh data (opsional)
+  // fputcsv($output, array('Contoh Keyword', 'Contoh Grup', '123456789', '987654321', 'Halo, ini contoh greeting'));
+
+  fclose($output);
+  exit;
+}
