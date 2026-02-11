@@ -197,17 +197,15 @@ function chat_form_new($atts)
                 $("#form-chat-new").trigger("reset");
                 // jika ada cookie dilarang maka datalayer tidak dikirim
                 // Hanya kirim dataLayer jika website minimal 27 karakter
-                if (getCookie("dilarang") == null && website.length >= 10) {
-                  // dataLayer.push({
-                  //   event: 'klik_<?php //echo $kondisi_gtag; 
-                                    ?>',
-                  //   button_id: '<?php //echo $kondisi_gtag; 
-                                    ?>',
-                  //   nama: nama,
-                  //   no_whatsapp: whatsapp,
-                  //   jenis_website: website
-                  // });
-                }
+                // if (getCookie("dilarang") == null && website.length >= 10) {
+                dataLayer.push({
+                  event: 'klik_<?php echo $kondisi_gtag; ?>',
+                  button_id: '<?php echo $kondisi_gtag; ?>',
+                  nama: nama,
+                  no_whatsapp: whatsapp,
+                  jenis_website: website
+                });
+                // }
 
                 setTimeout(function() {
                   var redirectUrl = "<?php echo esc_js($redirect_url); ?>";
