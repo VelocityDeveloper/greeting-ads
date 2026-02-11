@@ -3,7 +3,7 @@ function chat_form_new($atts)
 {
   $atts = shortcode_atts([
     'redirect' => '', // default kosong
-    'walength' => 10, // default 10
+    'walength' => 10, // 0 jika tidak ingin set
     'weblength' => 10, // default 10
   ], $atts, 'chat-form-new');
 
