@@ -5,6 +5,7 @@ function chat_form_new($atts)
     'redirect' => '', // default kosong
     'walength' => 10, // 0 jika tidak ingin set
     'weblength' => 10, // default 10
+    'push' => 'mobile,pc', // default mobile,pc
   ], $atts, 'chat-form-new');
 
   ob_start();
@@ -108,6 +109,7 @@ function chat_form_new($atts)
   <script>
     jQuery(function($) {
       let webLength = <?php echo $atts['weblength']; ?>;
+      let pushSettings = "<?php echo $atts['push']; ?>".split(",").map(item => item.trim());
 
       function validateInputsNew() {
         let nama = $("#input-nama-new").val().trim();
@@ -115,6 +117,7 @@ function chat_form_new($atts)
         let website = $("#jenis-website-new").val().trim();
         let valid = true;
         let waLength = <?php echo $atts['walength']; ?>;
+        let push = ["mobile", "pc"];
 
         if (nama.length < 3) {
           $("#info-nama-new").text("Nama minimal 3 karakter").css("color", "red");
@@ -137,9 +140,15 @@ function chat_form_new($atts)
           $("#info-wa-new").text("");
         }
 
+        if (website.length < webLength) {
+          $("#info-website-new").text("Jenis website minimal " + webLength + " karakter").css("color", "red");
+          valid = false;
+        } else {
+          $("#info-website-new").text("");
+        }
 
-        // Enable button jika nama dan wa valid (tanpa syarat minimal website)
-        if (nama.length >= 3 && wa.length >= waLength && wa.substring(0, 2) === "08" && getCookie("dilarang") !== "true") {
+        // Enable button jika nama, wa, dan website valid
+        if (nama.length >= 3 && wa.length >= waLength && wa.substring(0, 2) === "08" && website.length >= webLength && getCookie("dilarang") !== "true") {
           $(".button-green")
             .removeClass("disable")
             .addClass("enable")
@@ -201,7 +210,8 @@ function chat_form_new($atts)
                 $("#form-chat-new").trigger("reset");
                 // jika ada cookie dilarang maka datalayer tidak dikirim
                 // Hanya kirim dataLayer jika website minimal 27 karakter
-                if (getCookie("dilarang") == null && website.length >= webLength) {
+                // Dan device sesuai dengan setting push
+                if (getCookie("dilarang") == null && website.length >= webLength && pushSettings.includes(device)) {
                   dataLayer.push({
                     event: 'klik_<?php echo $kondisi_gtag; ?>',
                     button_id: '<?php echo $kondisi_gtag; ?>',
