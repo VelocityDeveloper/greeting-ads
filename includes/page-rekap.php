@@ -12,6 +12,15 @@ function velocity_add_admin_page()
     'dashicons-format-chat',
     25
   );
+
+  add_submenu_page(
+    'rekap-chat-form',
+    'Klik WhatsApp',
+    'Klik WhatsApp',
+    'manage_options',
+    'rekap-whatsapp-clicks',
+    'velocity_render_whatsapp_clicks_page'
+  );
 }
 
 // READ + FORM + CREATE + UPDATE + DELETE HANDLING
@@ -582,4 +591,119 @@ function format_status($status)
     default:
       return '<span style="color: gray;">❓</span>';
   }
+}
+
+function velocity_render_whatsapp_clicks_page()
+{
+  date_default_timezone_set('Asia/Jakarta');
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
+
+  $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name));
+
+  $now = current_time('timestamp');
+  $today = date('Y-m-d', $now);
+
+?>
+  <div class="wrap">
+    <h1>Klik WhatsApp</h1>
+    <?php if (!$table_exists): ?>
+      <p>Belum ada data klik WhatsApp yang terekam.</p>
+  </div>
+<?php
+      return;
+    endif;
+
+    $total_all = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+    $today_count = (int) $wpdb->get_var(
+      $wpdb->prepare(
+        "SELECT COUNT(*) FROM $table_name WHERE DATE(created_at) = %s",
+        $today
+      )
+    );
+
+    $week_count = (int) $wpdb->get_var(
+      $wpdb->prepare(
+        "SELECT COUNT(*) FROM $table_name WHERE YEARWEEK(created_at, 1) = YEARWEEK(%s, 1)",
+        $today
+      )
+    );
+
+    $month_count = (int) $wpdb->get_var(
+      $wpdb->prepare(
+        "SELECT COUNT(*) FROM $table_name WHERE YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s)",
+        $today,
+        $today
+      )
+    );
+
+    $latest_clicks = $wpdb->get_results(
+      "SELECT id, ip_address, user_agent, referer, created_at FROM $table_name ORDER BY created_at DESC LIMIT 50"
+    );
+?>
+
+<h2>Ringkasan Klik</h2>
+<table class="widefat fixed striped" style="max-width: 600px;">
+  <thead>
+    <tr>
+      <th>Periode</th>
+      <th>Jumlah Klik</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Hari ini</td>
+      <td><?php echo esc_html($today_count); ?></td>
+    </tr>
+    <tr>
+      <td>Minggu ini</td>
+      <td><?php echo esc_html($week_count); ?></td>
+    </tr>
+    <tr>
+      <td>Bulan ini</td>
+      <td><?php echo esc_html($month_count); ?></td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td><?php echo esc_html($total_all); ?></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 style="margin-top: 30px;">Klik Terbaru</h2>
+<?php if ($latest_clicks): ?>
+  <table class="widefat fixed striped">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>IP Address</th>
+        <th>User Agent</th>
+        <th>Referer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php foreach ($latest_clicks as $click): ?>
+        <tr>
+          <td><?php echo esc_html($click->created_at); ?></td>
+          <td><?php echo esc_html($click->ip_address); ?></td>
+          <td><?php echo esc_html($click->user_agent); ?></td>
+          <td>
+            <?php if (!empty($click->referer)): ?>
+              <a href="<?php echo esc_url($click->referer); ?>" target="_blank" rel="noopener noreferrer">
+                <?php echo esc_html($click->referer); ?>
+              </a>
+            <?php else: ?>
+              -
+            <?php endif; ?>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+<?php else: ?>
+  <p>Belum ada klik yang terekam.</p>
+<?php endif; ?>
+</div>
+<?php
 }

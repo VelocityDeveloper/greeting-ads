@@ -311,7 +311,10 @@ function tampilan_baru()
       z-index: 10;
     }
   </style>
-  <a href="https://velocitydeveloper.com/form-chat/" class="wa-float">
+  <?php
+  $vd_wa_click_url = add_query_arg('vd_wa_click', '1', home_url('/'));
+  ?>
+  <a href="<?php echo esc_url($vd_wa_click_url); ?>" class="wa-float">
     <span class="ripple"></span>
     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
       <path
@@ -416,3 +419,46 @@ function whatsapp_floating()
   }
 }
 add_action('wp_footer', 'whatsapp_floating');
+
+function vd_handle_whatsapp_click()
+{
+  if (!isset($_GET['vd_wa_click'])) {
+    return;
+  }
+
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
+  $charset_collate = $wpdb->get_charset_collate();
+
+  $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+    id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    ip_address varchar(45) NOT NULL,
+    user_agent text NOT NULL,
+    referer text NULL,
+    created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY  (id),
+    KEY created_at (created_at)
+  ) $charset_collate;";
+
+  $wpdb->query($sql);
+
+  $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+  $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+  $referer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
+
+  $wpdb->insert(
+    $table_name,
+    [
+      'ip_address' => $ip_address,
+      'user_agent' => $user_agent,
+      'referer' => $referer,
+      'created_at' => current_time('mysql')
+    ]
+  );
+
+  $redirect_url = 'https://velocitydeveloper.com/form-chat/';
+  wp_redirect($redirect_url);
+  exit;
+}
+
+add_action('template_redirect', 'vd_handle_whatsapp_click');
