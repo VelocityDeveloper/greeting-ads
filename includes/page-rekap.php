@@ -607,6 +607,23 @@ function velocity_render_whatsapp_clicks_page()
   $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : '';
   $to_date = isset($_GET['to_date']) ? sanitize_text_field($_GET['to_date']) : '';
 
+  if (isset($_POST['vd_wa_bulk_action']) && $_POST['vd_wa_bulk_action'] === 'delete' && !empty($_POST['vd_selected_ids'])) {
+    check_admin_referer('vd_wa_bulk_delete', 'vd_wa_bulk_nonce');
+
+    $ids = array_map('intval', (array) $_POST['vd_selected_ids']);
+    if (!empty($ids)) {
+      $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+      $wpdb->query(
+        $wpdb->prepare(
+          "DELETE FROM $table_name WHERE id IN ($placeholders)",
+          $ids
+        )
+      );
+
+      echo '<div class="updated"><p>' . esc_html(count($ids)) . ' data klik WhatsApp berhasil dihapus.</p></div>';
+    }
+  }
+
 ?>
   <div class="wrap">
     <h1>Klik WhatsApp</h1>
@@ -674,14 +691,14 @@ function velocity_render_whatsapp_clicks_page()
     if (!empty($where_params)) {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, user_agent, referer, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT id, ip_address, referer, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           ...array_merge($where_params, [$per_page, $offset])
         )
       );
     } else {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, user_agent, referer, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT id, ip_address, referer, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           $per_page,
           $offset
         )
@@ -791,43 +808,69 @@ function velocity_render_whatsapp_clicks_page()
 </form>
 
 <?php if ($latest_clicks): ?>
-  <style>
-    .vd-ua-cell {
-      max-width: 600px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  <form method="post">
+    <?php wp_nonce_field('vd_wa_bulk_delete', 'vd_wa_bulk_nonce'); ?>
+    <input type="hidden" name="vd_wa_bulk_action" value="delete">
+    <div style="margin-bottom: 10px;">
+      <button type="submit" class="button button-secondary" onclick="return confirm('Hapus data yang dipilih?');">
+        Hapus yang dipilih
+      </button>
+    </div>
+    <style>
+      .vd-ua-cell {
+        max-width: 600px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .vd-page-cell {
-      max-width: 260px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  </style>
-  <table class="widefat fixed striped">
-    <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>Page</th>
-        <th>User Agent</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($latest_clicks as $click): ?>
+      .vd-page-cell {
+        max-width: 260px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .vd-ip-cell {
+        max-width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    </style>
+    <table class="widefat fixed striped">
+      <thead>
         <tr>
-          <td><?php echo esc_html($click->created_at); ?></td>
-          <td class="vd-page-cell" title="<?php echo esc_attr($click->referer); ?>">
-            <?php echo esc_html($click->referer); ?>
-          </td>
-          <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
-            <?php echo esc_html($click->user_agent); ?>
-          </td>
+          <th style="width:40px;text-align:center;">
+            <input type="checkbox" id="vd_select_all_clicks">
+          </th>
+          <th>Tanggal</th>
+          <th>Page</th>
+          <th>IP</th>
+          <th>User Agent</th>
         </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <?php foreach ($latest_clicks as $click): ?>
+          <tr>
+            <td style="text-align:center;">
+              <input type="checkbox" name="vd_selected_ids[]" value="<?php echo intval($click->id); ?>">
+            </td>
+            <td><?php echo esc_html($click->created_at); ?></td>
+            <td class="vd-page-cell" title="<?php echo esc_attr($click->referer); ?>">
+              <?php echo esc_html($click->referer); ?>
+            </td>
+            <td class="vd-ip-cell" title="<?php echo esc_attr($click->ip_address); ?>">
+              <?php echo esc_html($click->ip_address); ?>
+            </td>
+            <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
+              <?php echo esc_html($click->user_agent); ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </form>
   <?php if ($total_pages > 1): ?>
     <div class="tablenav bottom">
       <div class="tablenav-pages">
@@ -876,6 +919,19 @@ function velocity_render_whatsapp_clicks_page()
 <?php else: ?>
   <div style="text-align: center; padding: 20px;width: 100%;">Belum ada klik yang terekam.</div>
 <?php endif; ?>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var selectAll = document.getElementById('vd_select_all_clicks');
+    if (selectAll) {
+      selectAll.addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('input[name="vd_selected_ids[]"]');
+        checkboxes.forEach(function(cb) {
+          cb.checked = selectAll.checked;
+        });
+      });
+    }
+  });
+</script>
 </div>
 <?php
 }

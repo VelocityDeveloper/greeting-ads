@@ -426,9 +426,7 @@ function vd_handle_whatsapp_click()
     return;
   }
 
-  if (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) {
-    return;
-  }
+  $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
 
   global $wpdb;
   $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
@@ -446,19 +444,21 @@ function vd_handle_whatsapp_click()
 
   $wpdb->query($sql);
 
-  $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
-  $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
-  $referer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
+  if ($is_ads) {
+    $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+    $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+    $referer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
 
-  $wpdb->insert(
-    $table_name,
-    [
-      'ip_address' => $ip_address,
-      'user_agent' => $user_agent,
-      'referer' => $referer,
-      'created_at' => current_time('mysql')
-    ]
-  );
+    $wpdb->insert(
+      $table_name,
+      [
+        'ip_address' => $ip_address,
+        'user_agent' => $user_agent,
+        'referer' => $referer,
+        'created_at' => current_time('mysql')
+      ]
+    );
+  }
 
   $redirect_url = 'https://velocitydeveloper.com/form-chat/';
   wp_redirect($redirect_url);
