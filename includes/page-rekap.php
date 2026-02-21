@@ -604,6 +604,9 @@ function velocity_render_whatsapp_clicks_page()
   $now = current_time('timestamp');
   $today = date('Y-m-d', $now);
 
+  $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : '';
+  $to_date = isset($_GET['to_date']) ? sanitize_text_field($_GET['to_date']) : '';
+
 ?>
   <div class="wrap">
     <h1>Klik WhatsApp</h1>
@@ -638,72 +641,229 @@ function velocity_render_whatsapp_clicks_page()
       )
     );
 
-    $latest_clicks = $wpdb->get_results(
-      "SELECT id, ip_address, user_agent, referer, created_at FROM $table_name ORDER BY created_at DESC LIMIT 50"
-    );
+    $per_page = 30;
+    $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+    $offset = ($current_page - 1) * $per_page;
+
+    $where = "WHERE 1=1";
+    $where_params = [];
+
+    if (!empty($from_date)) {
+      $where .= " AND DATE(created_at) >= %s";
+      $where_params[] = $from_date;
+    }
+
+    if (!empty($to_date)) {
+      $where .= " AND DATE(created_at) <= %s";
+      $where_params[] = $to_date;
+    }
+
+    if (!empty($where_params)) {
+      $total_items = (int) $wpdb->get_var(
+        $wpdb->prepare(
+          "SELECT COUNT(*) FROM $table_name $where",
+          $where_params
+        )
+      );
+    } else {
+      $total_items = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table_name $where");
+    }
+
+    $total_pages = max(1, ceil($total_items / $per_page));
+
+    if (!empty($where_params)) {
+      $latest_clicks = $wpdb->get_results(
+        $wpdb->prepare(
+          "SELECT id, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          ...array_merge($where_params, [$per_page, $offset])
+        )
+      );
+    } else {
+      $latest_clicks = $wpdb->get_results(
+        $wpdb->prepare(
+          "SELECT id, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          $per_page,
+          $offset
+        )
+      );
+    }
 ?>
 
-<h2>Ringkasan Klik</h2>
-<table class="widefat fixed striped" style="max-width: 600px;">
-  <thead>
-    <tr>
-      <th>Periode</th>
-      <th>Jumlah Klik</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Hari ini</td>
-      <td><?php echo esc_html($today_count); ?></td>
-    </tr>
-    <tr>
-      <td>Minggu ini</td>
-      <td><?php echo esc_html($week_count); ?></td>
-    </tr>
-    <tr>
-      <td>Bulan ini</td>
-      <td><?php echo esc_html($month_count); ?></td>
-    </tr>
-    <tr>
-      <td>Total</td>
-      <td><?php echo esc_html($total_all); ?></td>
-    </tr>
-  </tbody>
-</table>
+<style>
+  .vd-summary-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 12px 0 24px;
+  }
 
-<h2 style="margin-top: 30px;">Klik Terbaru</h2>
-<?php if ($latest_clicks): ?>
-  <table class="widefat fixed striped">
-    <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>IP Address</th>
-        <th>User Agent</th>
-        <th>Referer</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($latest_clicks as $click): ?>
+  .vd-summary-card {
+    flex: 1 1 180px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .vd-summary-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .vd-summary-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.1;
+  }
+
+  .vd-summary-caption {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .vd-summary-card {
+      background: #020617;
+      border-color: #1f2937;
+      box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.6), 0 4px 6px -4px rgba(15, 23, 42, 0.7);
+    }
+
+    .vd-summary-label {
+      color: #9ca3af;
+    }
+
+    .vd-summary-value {
+      color: #f9fafb;
+    }
+
+    .vd-summary-caption {
+      color: #6b7280;
+    }
+  }
+</style>
+
+<div class="vd-summary-grid">
+  <div class="vd-summary-card">
+    <div class="vd-summary-label">Hari ini</div>
+    <div class="vd-summary-value"><?php echo esc_html($today_count); ?></div>
+    <div class="vd-summary-caption">Jumlah klik WhatsApp pada tanggal <?php echo esc_html($today); ?></div>
+  </div>
+  <div class="vd-summary-card">
+    <div class="vd-summary-label">Minggu ini</div>
+    <div class="vd-summary-value"><?php echo esc_html($week_count); ?></div>
+    <div class="vd-summary-caption">Total klik selama minggu berjalan</div>
+  </div>
+  <div class="vd-summary-card">
+    <div class="vd-summary-label">Bulan ini</div>
+    <div class="vd-summary-value"><?php echo esc_html($month_count); ?></div>
+    <div class="vd-summary-caption">Total klik di bulan ini</div>
+  </div>
+  <div class="vd-summary-card">
+    <div class="vd-summary-label">Total</div>
+    <div class="vd-summary-value"><?php echo esc_html($total_all); ?></div>
+    <div class="vd-summary-caption">Total semua klik yang terekam</div>
+  </div>
+  <h2 style="margin-top: 30px;">Klik Terbaru</h2>
+
+  <form method="get" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+    <input type="hidden" name="page" value="rekap-whatsapp-clicks">
+    <div>
+      <label for="from_date">Dari tanggal</label><br>
+      <input type="date" id="from_date" name="from_date" value="<?php echo esc_attr($from_date); ?>">
+    </div>
+    <div>
+      <label for="to_date">Sampai tanggal</label><br>
+      <input type="date" id="to_date" name="to_date" value="<?php echo esc_attr($to_date); ?>">
+    </div>
+    <div>
+      <button type="submit" class="button button-primary">Filter</button>
+      <a href="<?php echo esc_url(admin_url('admin.php?page=rekap-whatsapp-clicks')); ?>" class="button">Reset</a>
+    </div>
+  </form>
+
+  <?php if ($latest_clicks): ?>
+    <style>
+      .vd-ua-cell {
+        max-width: 600px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    </style>
+    <table class="widefat fixed striped">
+      <thead>
         <tr>
-          <td><?php echo esc_html($click->created_at); ?></td>
-          <td><?php echo esc_html($click->ip_address); ?></td>
-          <td><?php echo esc_html($click->user_agent); ?></td>
-          <td>
-            <?php if (!empty($click->referer)): ?>
-              <a href="<?php echo esc_url($click->referer); ?>" target="_blank" rel="noopener noreferrer">
-                <?php echo esc_html($click->referer); ?>
-              </a>
-            <?php else: ?>
-              -
-            <?php endif; ?>
-          </td>
+          <th>Tanggal</th>
+          <th>User Agent</th>
         </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
-<?php else: ?>
-  <p>Belum ada klik yang terekam.</p>
-<?php endif; ?>
+      </thead>
+      <tbody>
+        <?php foreach ($latest_clicks as $click): ?>
+          <tr>
+            <td><?php echo esc_html($click->created_at); ?></td>
+            <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
+              <?php echo esc_html($click->user_agent); ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <?php if ($total_pages > 1): ?>
+      <div class="tablenav bottom">
+        <div class="tablenav-pages">
+          <?php
+          $display_pages = [];
+          for ($i = 1; $i <= min(5, $total_pages); $i++) {
+            $display_pages[] = $i;
+          }
+          for ($i = max($total_pages - 2, 1); $i <= $total_pages; $i++) {
+            $display_pages[] = $i;
+          }
+          for ($i = max($current_page - 2, 1); $i <= min($current_page + 2, $total_pages); $i++) {
+            $display_pages[] = $i;
+          }
+          $display_pages = array_unique($display_pages);
+          sort($display_pages);
+
+          $base_args = ['page' => 'rekap-whatsapp-clicks'];
+          if (!empty($from_date)) {
+            $base_args['from_date'] = $from_date;
+          }
+          if (!empty($to_date)) {
+            $base_args['to_date'] = $to_date;
+          }
+
+          $last = 0;
+          foreach ($display_pages as $i) {
+            if ($last && $i > $last + 1) {
+              echo '<span class="page-numbers dots" style="padding: 10px;">...</span>';
+            }
+            if ($i == $current_page) {
+              echo '<span class="page-numbers current" style="padding: 10px;">' . $i . '</span>';
+            } else {
+              $pagination_url = add_query_arg(
+                array_merge($base_args, ['paged' => $i]),
+                admin_url('admin.php')
+              );
+              echo '<a class="page-numbers" style="padding: 10px;" href="' . esc_url($pagination_url) . '">' . $i . '</a>';
+            }
+            $last = $i;
+          }
+          ?>
+        </div>
+      </div>
+    <?php endif; ?>
+  <?php else: ?>
+    <p>Belum ada klik yang terekam.</p>
+  <?php endif; ?>
 </div>
 <?php
 }
