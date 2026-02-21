@@ -674,14 +674,14 @@ function velocity_render_whatsapp_clicks_page()
     if (!empty($where_params)) {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT id, user_agent, referer, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           ...array_merge($where_params, [$per_page, $offset])
         )
       );
     } else {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT id, user_agent, referer, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           $per_page,
           $offset
         )
@@ -771,99 +771,111 @@ function velocity_render_whatsapp_clicks_page()
     <div class="vd-summary-value"><?php echo esc_html($total_all); ?></div>
     <div class="vd-summary-caption">Total semua klik yang terekam</div>
   </div>
-  <h2 style="margin-top: 30px;">Klik Terbaru</h2>
+</div>
+<h2 style="margin-top: 30px;">Klik Terbaru</h2>
 
-  <form method="get" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-    <input type="hidden" name="page" value="rekap-whatsapp-clicks">
-    <div>
-      <label for="from_date">Dari tanggal</label><br>
-      <input type="date" id="from_date" name="from_date" value="<?php echo esc_attr($from_date); ?>">
-    </div>
-    <div>
-      <label for="to_date">Sampai tanggal</label><br>
-      <input type="date" id="to_date" name="to_date" value="<?php echo esc_attr($to_date); ?>">
-    </div>
-    <div>
-      <button type="submit" class="button button-primary">Filter</button>
-      <a href="<?php echo esc_url(admin_url('admin.php?page=rekap-whatsapp-clicks')); ?>" class="button">Reset</a>
-    </div>
-  </form>
+<form method="get" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+  <input type="hidden" name="page" value="rekap-whatsapp-clicks">
+  <div>
+    <label for="from_date">Dari tanggal</label><br>
+    <input type="date" id="from_date" name="from_date" value="<?php echo esc_attr($from_date); ?>">
+  </div>
+  <div>
+    <label for="to_date">Sampai tanggal</label><br>
+    <input type="date" id="to_date" name="to_date" value="<?php echo esc_attr($to_date); ?>">
+  </div>
+  <div>
+    <button type="submit" class="button button-primary">Filter</button>
+    <a href="<?php echo esc_url(admin_url('admin.php?page=rekap-whatsapp-clicks')); ?>" class="button">Reset</a>
+  </div>
+</form>
 
-  <?php if ($latest_clicks): ?>
-    <style>
-      .vd-ua-cell {
-        max-width: 600px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    </style>
-    <table class="widefat fixed striped">
-      <thead>
+<?php if ($latest_clicks): ?>
+  <style>
+    .vd-ua-cell {
+      max-width: 600px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .vd-page-cell {
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+  <table class="widefat fixed striped">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Page</th>
+        <th>User Agent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php foreach ($latest_clicks as $click): ?>
         <tr>
-          <th>Tanggal</th>
-          <th>User Agent</th>
+          <td><?php echo esc_html($click->created_at); ?></td>
+          <td class="vd-page-cell" title="<?php echo esc_attr($click->referer); ?>">
+            <?php echo esc_html($click->referer); ?>
+          </td>
+          <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
+            <?php echo esc_html($click->user_agent); ?>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($latest_clicks as $click): ?>
-          <tr>
-            <td><?php echo esc_html($click->created_at); ?></td>
-            <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
-              <?php echo esc_html($click->user_agent); ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-    <?php if ($total_pages > 1): ?>
-      <div class="tablenav bottom">
-        <div class="tablenav-pages">
-          <?php
-          $display_pages = [];
-          for ($i = 1; $i <= min(5, $total_pages); $i++) {
-            $display_pages[] = $i;
-          }
-          for ($i = max($total_pages - 2, 1); $i <= $total_pages; $i++) {
-            $display_pages[] = $i;
-          }
-          for ($i = max($current_page - 2, 1); $i <= min($current_page + 2, $total_pages); $i++) {
-            $display_pages[] = $i;
-          }
-          $display_pages = array_unique($display_pages);
-          sort($display_pages);
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php if ($total_pages > 1): ?>
+    <div class="tablenav bottom">
+      <div class="tablenav-pages">
+        <?php
+        $display_pages = [];
+        for ($i = 1; $i <= min(5, $total_pages); $i++) {
+          $display_pages[] = $i;
+        }
+        for ($i = max($total_pages - 2, 1); $i <= $total_pages; $i++) {
+          $display_pages[] = $i;
+        }
+        for ($i = max($current_page - 2, 1); $i <= min($current_page + 2, $total_pages); $i++) {
+          $display_pages[] = $i;
+        }
+        $display_pages = array_unique($display_pages);
+        sort($display_pages);
 
-          $base_args = ['page' => 'rekap-whatsapp-clicks'];
-          if (!empty($from_date)) {
-            $base_args['from_date'] = $from_date;
-          }
-          if (!empty($to_date)) {
-            $base_args['to_date'] = $to_date;
-          }
+        $base_args = ['page' => 'rekap-whatsapp-clicks'];
+        if (!empty($from_date)) {
+          $base_args['from_date'] = $from_date;
+        }
+        if (!empty($to_date)) {
+          $base_args['to_date'] = $to_date;
+        }
 
-          $last = 0;
-          foreach ($display_pages as $i) {
-            if ($last && $i > $last + 1) {
-              echo '<span class="page-numbers dots" style="padding: 10px;">...</span>';
-            }
-            if ($i == $current_page) {
-              echo '<span class="page-numbers current" style="padding: 10px;">' . $i . '</span>';
-            } else {
-              $pagination_url = add_query_arg(
-                array_merge($base_args, ['paged' => $i]),
-                admin_url('admin.php')
-              );
-              echo '<a class="page-numbers" style="padding: 10px;" href="' . esc_url($pagination_url) . '">' . $i . '</a>';
-            }
-            $last = $i;
+        $last = 0;
+        foreach ($display_pages as $i) {
+          if ($last && $i > $last + 1) {
+            echo '<span class="page-numbers dots" style="padding: 10px;">...</span>';
           }
-          ?>
-        </div>
+          if ($i == $current_page) {
+            echo '<span class="page-numbers current" style="padding: 10px;">' . $i . '</span>';
+          } else {
+            $pagination_url = add_query_arg(
+              array_merge($base_args, ['paged' => $i]),
+              admin_url('admin.php')
+            );
+            echo '<a class="page-numbers" style="padding: 10px;" href="' . esc_url($pagination_url) . '">' . $i . '</a>';
+          }
+          $last = $i;
+        }
+        ?>
       </div>
-    <?php endif; ?>
-  <?php else: ?>
-    <p>Belum ada klik yang terekam.</p>
+    </div>
   <?php endif; ?>
+<?php else: ?>
+  <div style="text-align: center; padding: 20px;width: 100%;">Belum ada klik yang terekam.</div>
+<?php endif; ?>
 </div>
 <?php
 }

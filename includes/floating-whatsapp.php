@@ -426,6 +426,10 @@ function vd_handle_whatsapp_click()
     return;
   }
 
+  if (get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads')) {
+    return;
+  }
+
   global $wpdb;
   $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
   $charset_collate = $wpdb->get_charset_collate();
