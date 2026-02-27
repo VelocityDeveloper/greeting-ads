@@ -116,7 +116,30 @@ function vd_async_track_wa_click()
     wp_send_json_error(['message' => 'Invalid nonce'], 403);
   }
 
+  // Ambil page_url lebih awal untuk validasi ads via parameter URL
+  $page_url = isset($_POST['page_url']) ? esc_url_raw(wp_unslash($_POST['page_url'])) : '';
+  if ($page_url === '' && isset($_SERVER['HTTP_REFERER'])) {
+    $page_url = esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']));
+  }
+
   $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
+
+  // Fallback: Cek parameter URL pada page_url jika cookie/logic server gagal
+  if (!$is_ads && $page_url) {
+    $query_str = parse_url($page_url, PHP_URL_QUERY);
+    if ($query_str) {
+      parse_str($query_str, $query_params);
+      if (
+        isset($query_params['gclid']) ||
+        isset($query_params['wbraid']) ||
+        isset($query_params['gbraid']) ||
+        (isset($query_params['utm_source']) && $query_params['utm_source'] === 'google' && (isset($query_params['utm_medium']) || isset($query_params['utm_content'])))
+      ) {
+        $is_ads = true;
+      }
+    }
+  }
+
   if (!$is_ads) {
     wp_send_json_success(['logged' => false, 'reason' => 'not_ads']);
   }
@@ -131,11 +154,6 @@ function vd_async_track_wa_click()
   $event_id = trim($event_id);
   if ($event_id === '' && function_exists('vd_generate_whatsapp_event_id')) {
     $event_id = vd_generate_whatsapp_event_id();
-  }
-
-  $page_url = isset($_POST['page_url']) ? esc_url_raw(wp_unslash($_POST['page_url'])) : '';
-  if ($page_url === '' && isset($_SERVER['HTTP_REFERER'])) {
-    $page_url = esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']));
   }
 
   $payload = [
