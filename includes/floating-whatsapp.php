@@ -1,17 +1,12 @@
-<?php
+﻿<?php
 function tampilan_baru()
 {
   ob_start();
 ?>
   <style>
-    * {
+    .wa-float,
+    .wa-float * {
       box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #f4f4f4;
     }
 
     .wa-float {
@@ -74,7 +69,6 @@ function tampilan_baru()
     }
 
     @keyframes smooth-bounce {
-
       0%,
       100% {
         transform: translateY(0);
@@ -101,220 +95,31 @@ function tampilan_baru()
       }
     }
 
-    @keyframes indlep {
-      0% {
-        transform: scale(1);
-      }
-
-      20% {
-        transform: scale(1.1) rotate(2deg);
-      }
-
-      40% {
-        transform: scale(0.95) rotate(-2deg);
-      }
-
-      60% {
-        transform: scale(1.05) rotate(1deg);
-      }
-
-      80% {
-        transform: scale(0.97) rotate(-1deg);
-      }
-
-      100% {
-        transform: scale(1) rotate(0);
-      }
-    }
-
-    .wa-float.indlep {
-      animation: indlep 0.4s ease;
-    }
-
-    .form-wrapper {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background-color: rgba(0, 0, 0, 0.9);
-      z-index: 9999;
-      padding: 0 16px;
-      overflow: visible;
-      padding-top: 40px;
-    }
-
-    .form-wrapper.show {
-      display: flex;
-      animation: fadeInUp 0.8s ease forwards;
-    }
-
-    .form-wrapper.hide {
-      animation: fadeOutDown 0.8s ease forwards;
-    }
-
-    .form-container {
-      background: #fff;
-      padding: 24px 20px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 360px;
-      max-height: 90vh;
-      overflow: visible;
-      position: relative;
-    }
-
-    .form-container label {
-      display: block;
-      margin: 10px 0 6px;
-      font-size: 16px;
-      font-family: 'Lato', sans-serif;
-    }
-
-    .form-container input,
-    .form-container textarea {
-      width: 100%;
-      padding: 10px 8px 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-      font-family: 'Lato', sans-serif;
-      margin-bottom: 12px;
-    }
-
-    .form-container button {
-      width: 100%;
-      background-color: #25d366;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .form-container button:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-      background-color: #ccc;
-    }
-
-    .form-container button.disable {
-      background-color: #999;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 3px solid white;
-      border-radius: 50%;
-      border-top-color: transparent;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(50px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeOutDown {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      to {
-        opacity: 0;
-        transform: translateY(50px);
-      }
-    }
-
-    @keyframes shake {
-      0% {
-        transform: translateX(0);
-      }
-
-      25% {
-        transform: translateX(-5px);
-      }
-
-      50% {
-        transform: translateX(5px);
-      }
-
-      75% {
-        transform: translateX(-5px);
-      }
-
-      100% {
-        transform: translateX(0);
-      }
-    }
-
-    .shake {
-      animation: shake 0.4s ease;
-    }
-
-    @keyframes popScale {
-      0% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.1);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    .pop-scale {
-      animation: popScale 0.3s ease;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: grey;
-      color: white;
-      font-size: 32px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      text-align: center;
-      line-height: 40px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      z-index: 10;
-    }
   </style>
   <?php
-  $vd_wa_click_url = add_query_arg('vd_wa_click', '1', home_url('/'));
+  $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
+  $ads_greeting = 'vx';
+
+  if ($is_ads) {
+    $cookie_greeting = isset($_COOKIE['greeting']) ? sanitize_text_field(wp_unslash($_COOKIE['greeting'])) : '';
+    $cookie_greeting = trim($cookie_greeting);
+    if ($cookie_greeting !== '') {
+      $ads_greeting = $cookie_greeting;
+    }
+  }
+
+  $wa_number = $is_ads ? '6285729319861' : '6285701216057';
+  $wa_message = $is_ads
+    ? sprintf('Hallo, Saya tertarik buat website di Velocity Developer [%s]. Mohon infonya.', $ads_greeting)
+    : 'Hallo, Saya tertarik buat website di Velocity Developer [v0]. Mohon infonya.';
+  $wa_url = 'https://wa.me/' . $wa_number . '?text=' . rawurlencode($wa_message);
+
+  $tracking_greeting = $is_ads ? $ads_greeting : 'v0';
+  $tracking_type = $is_ads ? 'ads' : 'organic';
+  $async_track_nonce = wp_create_nonce('vd_async_wa_click');
+  $async_track_url = admin_url('admin-ajax.php');
   ?>
-  <a href="<?php echo esc_url($vd_wa_click_url); ?>" class="wa-float">
+  <a href="<?php echo esc_url($wa_url); ?>" class="wa-float" target="_blank" rel="noopener" data-traffic-type="<?php echo esc_attr($tracking_type); ?>" data-greeting="<?php echo esc_attr($tracking_greeting); ?>" data-async-track-url="<?php echo esc_url($async_track_url); ?>" data-async-track-nonce="<?php echo esc_attr($async_track_nonce); ?>">
     <span class="ripple"></span>
     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
       <path
@@ -323,89 +128,110 @@ function tampilan_baru()
     WhatsApp
   </a>
 
-  <div class="form-wrapper" id="formWrapper">
-    <div class="form-container">
-      <div class="close-btn" onclick="toggleForm()">×</div>
-      <div style="height:100%;max-height:70vh;width:100%;overflow-y:auto;">
-        <?php echo do_shortcode('[chat-form-input]'); ?>
-      </div>
-    </div>
-  </div>
-
   <script>
-    let originalBtnHTML;
     document.addEventListener("DOMContentLoaded", function() {
-      originalBtnHTML = document.getElementById("submitBtn").innerHTML;
-    });
-
-    function triggerIndlep() {
-      const el = document.querySelector('.wa-float');
-      el.classList.remove('indlep');
-      void el.offsetWidth;
-      el.classList.add('indlep');
-    }
-
-    function toggleForm() {
-      const wrapper = document.getElementById("formWrapper");
-      if (wrapper.classList.contains("show")) {
-        wrapper.classList.remove("show");
-        wrapper.classList.add("hide");
-        setTimeout(() => {
-          wrapper.classList.remove("hide");
-          wrapper.style.display = "none";
-        }, 800);
-      } else {
-        wrapper.classList.remove("hide");
-        wrapper.classList.add("show");
-        wrapper.style.display = "flex";
-      }
-    }
-
-    function kirimKeWA() {
-
-      const nama = document.getElementById("nama").value.trim();
-      const noWa = document.getElementById("no_wa").value.trim();
-      const jenisWeb = document.getElementById("jenis_web").value.trim();
-      const button = document.getElementById("submitBtn");
-      const formContainer = document.querySelector(".form-container");
-
-      if (!nama || !noWa || !jenisWeb) {
-        formContainer.classList.remove("shake");
-        void formContainer.offsetWidth;
-        formContainer.classList.add("shake");
+      const waFloat = document.querySelector('.wa-float');
+      if (!waFloat) {
         return;
       }
 
-      const pesan = `Halo, saya ${nama}. No WA saya ${noWa}. Saya ingin membuat website: ${jenisWeb}`;
-      const link = `https://wa.me/62XXXXXXXXXX?text=${encodeURIComponent(pesan)}`;
+      const getCookieValue = function(name) {
+        const value = `; ${document.cookie || ''}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length !== 2) {
+          return '';
+        }
 
-      button.disabled = true;
-      button.innerHTML = `<span class="spinner"></span>Mengirim...`;
-      button.classList.remove("pop-scale");
-      void button.offsetWidth;
-      button.classList.add("pop-scale");
+        const raw = parts.pop().split(';').shift() || '';
+        try {
+          return decodeURIComponent(raw);
+        } catch (e) {
+          return raw;
+        }
+      };
 
-      setTimeout(() => {
-        window.open(link, "_blank");
-        setTimeout(() => {
-          button.disabled = false;
-          button.innerHTML = originalBtnHTML;
-        }, 1000);
-      }, 300);
-    }
-  </script>
+      // Resolve final WA target in client-side to avoid stale cached HTML values.
+      const resolveWaTarget = function() {
+        const urlParams = new URLSearchParams(window.location.search || '');
+        const hasAdsParams = urlParams.has('gclid') ||
+          (urlParams.get('utm_source') === 'google' && (urlParams.has('utm_medium') || urlParams.has('utm_content')));
+        const isAds = (waFloat.dataset.trafficType === 'ads') || hasAdsParams;
 
+        let number = '6285701216057';
+        let greeting = 'v0';
+        let message = 'Hallo, Saya tertarik buat website di Velocity Developer [v0]. Mohon infonya.';
 
-  <script>
-    // Scroll otomatis saat input di-focus, supaya tidak tertutup keyboard
-    document.querySelectorAll('input, textarea').forEach(function(el) {
-      el.addEventListener('focus', function() {
-        setTimeout(() => {
-          el.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
+        if (isAds) {
+          number = '6285729319861';
+          const cookieGreeting = (getCookieValue('greeting') || '').trim();
+          const queryGreeting = (urlParams.get('greeting') || '').trim();
+          greeting = cookieGreeting || queryGreeting || (waFloat.dataset.greeting || '').trim() || 'vx';
+          message = `Hallo, Saya tertarik buat website di Velocity Developer [${greeting}]. Mohon infonya.`;
+        }
+
+        return {
+          isAds: isAds,
+          greeting: isAds ? greeting : 'v0',
+          url: `https://wa.me/${number}?text=${encodeURIComponent(message)}`
+        };
+      };
+
+      const initialWaTarget = resolveWaTarget();
+      waFloat.href = initialWaTarget.url;
+      waFloat.dataset.trafficType = initialWaTarget.isAds ? 'ads' : 'organic';
+      waFloat.dataset.greeting = initialWaTarget.greeting;
+
+      waFloat.addEventListener('click', function() {
+        const waTarget = resolveWaTarget();
+        waFloat.href = waTarget.url;
+        waFloat.dataset.trafficType = waTarget.isAds ? 'ads' : 'organic';
+        waFloat.dataset.greeting = waTarget.greeting;
+
+        if (typeof dataLayer !== 'undefined' && Array.isArray(dataLayer)) {
+          dataLayer.push({
+            event: 'klik_wa_ads'
           });
-        }, 300);
+        }
+
+        if (!waTarget.isAds) {
+          return;
+        }
+
+        const ajaxUrl = waFloat.dataset.asyncTrackUrl || '';
+        const nonce = waFloat.dataset.asyncTrackNonce || '';
+        if (!ajaxUrl || !nonce) {
+          return;
+        }
+
+        const eventId = (window.crypto && typeof window.crypto.randomUUID === 'function')
+          ? window.crypto.randomUUID()
+          : ('vdwa_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+
+        const payload = new URLSearchParams();
+        payload.append('action', 'vd_async_track_wa_click');
+        payload.append('nonce', nonce);
+        payload.append('event_id', eventId);
+        payload.append('greeting', waTarget.greeting || 'vx');
+        payload.append('page_url', window.location.href);
+
+        if (navigator.sendBeacon) {
+          const beaconQueued = navigator.sendBeacon(ajaxUrl, payload);
+          if (beaconQueued) {
+            return;
+          }
+        }
+
+        if (window.fetch) {
+          fetch(ajaxUrl, {
+            method: 'POST',
+            body: payload,
+            credentials: 'same-origin',
+            keepalive: true,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            }
+          }).catch(function() {});
+        }
       });
     });
   </script>
@@ -419,50 +245,3 @@ function whatsapp_floating()
   }
 }
 add_action('wp_footer', 'whatsapp_floating');
-
-function vd_handle_whatsapp_click()
-{
-  if (!isset($_GET['vd_wa_click'])) {
-    return;
-  }
-
-  $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
-
-  global $wpdb;
-  $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
-  $charset_collate = $wpdb->get_charset_collate();
-
-  $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-    id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    ip_address varchar(45) NOT NULL,
-    user_agent text NOT NULL,
-    referer text NULL,
-    created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY  (id),
-    KEY created_at (created_at)
-  ) $charset_collate;";
-
-  $wpdb->query($sql);
-
-  if ($is_ads) {
-    $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
-    $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
-    $referer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
-
-    $wpdb->insert(
-      $table_name,
-      [
-        'ip_address' => $ip_address,
-        'user_agent' => $user_agent,
-        'referer' => $referer,
-        'created_at' => current_time('mysql')
-      ]
-    );
-  }
-
-  $redirect_url = 'https://velocitydeveloper.com/form-chat/';
-  wp_redirect($redirect_url);
-  exit;
-}
-
-add_action('template_redirect', 'vd_handle_whatsapp_click');

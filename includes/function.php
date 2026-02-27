@@ -99,7 +99,8 @@ function save_utm_cookies()
         'path' => $path,
         'domain' => $domain,
         'secure' => $secure,
-        'httponly' => $httponly,
+        // Must be readable by client JS to build WA URL on first click without refresh.
+        'httponly' => false,
         'samesite' => 'Lax'
       ]);
     }

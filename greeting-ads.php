@@ -13,6 +13,8 @@ if (!defined('ABSPATH')) {
 
 // Konstanta untuk nama tabel database
 define('GREETING_ADS_TABLE', 'greeting_ads_data');
+define('VD_WA_CLICKS_TABLE', 'vd_whatsapp_clicks');
+define('VD_WA_CLICKS_SCHEMA_VERSION', '2.1.0');
 
 // Memuat file tambahan
 require_once plugin_dir_path(__FILE__) . 'includes/import-csv.php';
@@ -72,6 +74,9 @@ function greeting_ads_create_table()
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
+
+    // Ensure WhatsApp clicks table is ready with latest schema.
+    vd_maybe_upgrade_whatsapp_clicks_table(true);
 }
 
 // Hook untuk menghapus tabel saat plugin dihapus
@@ -82,3 +87,44 @@ function greeting_ads_uninstall()
     $table_name = $wpdb->prefix . GREETING_ADS_TABLE;
     $wpdb->query("DROP TABLE IF EXISTS $table_name");
 }
+
+/**
+ * Runtime migration for WhatsApp click logs table.
+ * Runs once per schema version and is safe to call multiple times.
+ */
+function vd_maybe_upgrade_whatsapp_clicks_table($force = false)
+{
+    $installed = get_option('vd_wa_clicks_schema_version', '');
+    if (!$force && $installed === VD_WA_CLICKS_SCHEMA_VERSION) {
+        return;
+    }
+
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    $table_name = $wpdb->prefix . VD_WA_CLICKS_TABLE;
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+    $sql = "CREATE TABLE $table_name (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        event_id char(36) NULL,
+        ip_address varchar(45) NOT NULL DEFAULT 'unknown',
+        user_agent text NOT NULL,
+        referer text NULL,
+        greeting varchar(191) NULL,
+        status varchar(20) NOT NULL DEFAULT 'success',
+        retry_count smallint(5) unsigned NOT NULL DEFAULT 0,
+        last_error text NULL,
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        UNIQUE KEY event_id (event_id),
+        KEY created_at (created_at),
+        KEY status (status)
+    ) $charset_collate;";
+
+    dbDelta($sql);
+
+    update_option('vd_wa_clicks_schema_version', VD_WA_CLICKS_SCHEMA_VERSION, false);
+}
+
+add_action('init', 'vd_maybe_upgrade_whatsapp_clicks_table', 5);

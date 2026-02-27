@@ -595,14 +595,13 @@ function format_status($status)
 
 function velocity_render_whatsapp_clicks_page()
 {
-  date_default_timezone_set('Asia/Jakarta');
   global $wpdb;
   $table_name = $wpdb->prefix . 'vd_whatsapp_clicks';
 
   $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name));
 
-  $now = current_time('timestamp');
-  $today = date('Y-m-d', $now);
+  $today = wp_date('Y-m-d');
+  $yesterday = wp_date('Y-m-d', strtotime('-1 day', strtotime($today)));
 
   $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : '';
   $to_date = isset($_GET['to_date']) ? sanitize_text_field($_GET['to_date']) : '';
@@ -634,25 +633,39 @@ function velocity_render_whatsapp_clicks_page()
       return;
     endif;
 
-    $total_all = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    $has_event_id = (bool) $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'event_id'");
+    $has_status = (bool) $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'status'");
+    $has_retry_count = (bool) $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'retry_count'");
+    $has_last_error = (bool) $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'last_error'");
+    $has_greeting = (bool) $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'greeting'");
+
+    $select_columns = "id,"
+      . ($has_event_id ? " event_id," : " '' AS event_id,")
+      . ($has_status ? " status," : " 'success' AS status,")
+      . ($has_retry_count ? " retry_count," : " 0 AS retry_count,")
+      . ($has_last_error ? " last_error," : " '' AS last_error,")
+      . ($has_greeting ? " greeting," : " '' AS greeting,")
+      . " ip_address, referer, user_agent, created_at";
+
+    $total_all = (int) $wpdb->get_var("SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE ip_address <> ''");
 
     $today_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(*) FROM $table_name WHERE DATE(created_at) = %s",
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''",
         $today
       )
     );
 
-    $week_count = (int) $wpdb->get_var(
+    $yesterday_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(*) FROM $table_name WHERE YEARWEEK(created_at, 1) = YEARWEEK(%s, 1)",
-        $today
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''",
+        $yesterday
       )
     );
 
     $month_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(*) FROM $table_name WHERE YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s)",
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s) AND ip_address <> ''",
         $today,
         $today
       )
@@ -691,14 +704,14 @@ function velocity_render_whatsapp_clicks_page()
     if (!empty($where_params)) {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, ip_address, referer, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT $select_columns FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           ...array_merge($where_params, [$per_page, $offset])
         )
       );
     } else {
       $latest_clicks = $wpdb->get_results(
         $wpdb->prepare(
-          "SELECT id, ip_address, referer, user_agent, created_at FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+          "SELECT $select_columns FROM $table_name $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
           $per_page,
           $offset
         )
@@ -771,22 +784,22 @@ function velocity_render_whatsapp_clicks_page()
   <div class="vd-summary-card">
     <div class="vd-summary-label">Hari ini</div>
     <div class="vd-summary-value"><?php echo esc_html($today_count); ?></div>
-    <div class="vd-summary-caption">Jumlah klik WhatsApp pada tanggal <?php echo esc_html($today); ?></div>
+    <div class="vd-summary-caption">Jumlah IP unik pada tanggal <?php echo esc_html($today); ?></div>
   </div>
   <div class="vd-summary-card">
-    <div class="vd-summary-label">Minggu ini</div>
-    <div class="vd-summary-value"><?php echo esc_html($week_count); ?></div>
-    <div class="vd-summary-caption">Total klik selama minggu berjalan</div>
+    <div class="vd-summary-label">Kemarin</div>
+    <div class="vd-summary-value"><?php echo esc_html($yesterday_count); ?></div>
+    <div class="vd-summary-caption">Jumlah IP unik pada tanggal <?php echo esc_html($yesterday); ?></div>
   </div>
   <div class="vd-summary-card">
     <div class="vd-summary-label">Bulan ini</div>
     <div class="vd-summary-value"><?php echo esc_html($month_count); ?></div>
-    <div class="vd-summary-caption">Total klik di bulan ini</div>
+    <div class="vd-summary-caption">Total IP unik di bulan ini</div>
   </div>
   <div class="vd-summary-card">
     <div class="vd-summary-label">Total</div>
     <div class="vd-summary-value"><?php echo esc_html($total_all); ?></div>
-    <div class="vd-summary-caption">Total semua klik yang terekam</div>
+    <div class="vd-summary-caption">Total semua IP unik yang terekam</div>
   </div>
 </div>
 <h2 style="margin-top: 30px;">Klik Terbaru</h2>
@@ -817,54 +830,311 @@ function velocity_render_whatsapp_clicks_page()
       </button>
     </div>
     <style>
-      .vd-ua-cell {
-        max-width: 600px;
+      .vd-click-table {
+        table-layout: auto;
+        --vd-greeting-col-width: 90px;
+        --vd-keyword-col-width: 120px;
+      }
+
+      .vd-date-col,
+      .vd-date-cell,
+      .vd-ip-col,
+      .vd-ip-cell {
+        width: 10%;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      }
+
+      .vd-event-col,
+      .vd-event-cell {
+        width: 3%;
+        white-space: nowrap;
+      }
+
+      .vd-keyword-col,
+      .vd-keyword-cell {
+        width: var(--vd-keyword-col-width);
+        max-width: var(--vd-keyword-col-width);
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .vd-greeting-col,
+      .vd-greeting-cell {
+        width: var(--vd-greeting-col-width);
+        max-width: var(--vd-greeting-col-width);
+        white-space: nowrap;
+      }
+
+      .vd-status-col,
+      .vd-status-cell {
+        width: 5%;
+        white-space: nowrap;
+      }
+
+      .vd-retry-col,
+      .vd-retry-cell {
+        width: 3%;
+        white-space: nowrap;
+      }
+
+      .vd-error-col,
+      .vd-error-cell {
+        width: 3%;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .vd-status-chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .vd-status-success {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .vd-status-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .vd-status-failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .vd-ua-cell {
+        max-width: 460px;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       .vd-page-cell {
-        max-width: 260px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        max-width: 460px;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       .vd-ip-cell {
         max-width: 160px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      }
+
+      .vd-copy-wrap {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .vd-copy-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .vd-copy-btn {
+        color: #2271b1;
+        text-decoration: none;
+        line-height: 1;
+      }
+
+      .vd-copy-icon {
+        display: inline-flex;
+        width: 16px;
+        height: 16px;
+      }
+
+      .vd-copy-icon svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+
+      .vd-copy-btn.is-copied {
+        color: #15803d;
+      }
+
+      @media (max-width: 782px) {
+        .vd-click-table {
+          border: 0;
+          background: transparent;
+        }
+
+        .vd-click-table thead {
+          display: none;
+        }
+
+        .vd-click-table tbody {
+          display: block;
+        }
+
+        .vd-click-table tbody tr {
+          display: block;
+          background: #fff;
+          border: 1px solid #dcdcde;
+          border-radius: 10px;
+          margin-bottom: 12px;
+          padding: 10px 12px;
+        }
+
+        .vd-click-table tbody td {
+          display: grid;
+          grid-template-columns: 92px 1fr;
+          gap: 8px;
+          border: 0;
+          padding: 6px 0;
+          width: 100% !important;
+          max-width: none !important;
+          white-space: normal !important;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+        }
+
+        .vd-click-table tbody td::before {
+          content: attr(data-label);
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .vd-click-table .vd-select-cell {
+          grid-template-columns: 92px auto;
+          align-items: center;
+        }
+
+        .vd-click-table .vd-select-cell input[type="checkbox"] {
+          margin: 0;
+        }
+
+        .vd-click-table .vd-copy-wrap {
+          align-items: flex-start;
+        }
       }
     </style>
-    <table class="widefat fixed striped">
+    <table class="widefat fixed striped vd-click-table">
       <thead>
         <tr>
           <th style="width:40px;text-align:center;">
             <input type="checkbox" id="vd_select_all_clicks">
           </th>
-          <th>Tanggal</th>
+          <th class="vd-date-col">Tanggal</th>
+          <th class="vd-greeting-col">Greeting</th>
+          <th class="vd-keyword-col">Kata Kunci</th>
+          <th class="vd-event-col">Event</th>
+          <th class="vd-status-col">Status</th>
+          <th class="vd-retry-col">Retry</th>
+          <th class="vd-error-col">Error</th>
           <th>Page</th>
-          <th>IP</th>
+          <th class="vd-ip-col">IP</th>
           <th>User Agent</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($latest_clicks as $click): ?>
+          <?php
+          $event_short = !empty($click->event_id) ? substr($click->event_id, 0, 4) : '-';
+          $status_raw = !empty($click->status) ? strtolower(trim($click->status)) : '-';
+          $status_class = 'vd-status-pending';
+          if ($status_raw === 'success') {
+            $status_class = 'vd-status-success';
+          } elseif ($status_raw === 'failed') {
+            $status_class = 'vd-status-failed';
+          } elseif ($status_raw === '-' || $status_raw === '') {
+            $status_class = 'vd-status-success';
+            $status_raw = 'success';
+          }
+          $greeting_value = '-';
+          if (isset($click->greeting) && trim((string) $click->greeting) !== '') {
+            $greeting_value = sanitize_text_field((string) $click->greeting);
+          }
+          $keyword = '-';
+          $referer_url = isset($click->referer) ? (string) $click->referer : '';
+          if ($referer_url !== '') {
+            $query_string = wp_parse_url($referer_url, PHP_URL_QUERY);
+            if (is_string($query_string) && $query_string !== '') {
+              $query_args = [];
+              parse_str($query_string, $query_args);
+              if (isset($query_args['utm_term']) && trim((string) $query_args['utm_term']) !== '') {
+                $keyword = sanitize_text_field((string) $query_args['utm_term']);
+              }
+            }
+          }
+          $retry_count = isset($click->retry_count) && $click->retry_count !== null ? intval($click->retry_count) : 0;
+          $last_error = isset($click->last_error) && trim((string) $click->last_error) !== '' ? (string) $click->last_error : '-';
+          ?>
           <tr>
-            <td style="text-align:center;">
+            <td class="vd-select-cell" data-label="Pilih">
               <input type="checkbox" name="vd_selected_ids[]" value="<?php echo intval($click->id); ?>">
             </td>
-            <td><?php echo esc_html($click->created_at); ?></td>
-            <td class="vd-page-cell" title="<?php echo esc_attr($click->referer); ?>">
-              <?php echo esc_html($click->referer); ?>
+            <td class="vd-date-cell" data-label="Tanggal"><?php echo esc_html($click->created_at); ?></td>
+            <td class="vd-greeting-cell" data-label="Greeting"><?php echo esc_html($greeting_value); ?></td>
+            <td class="vd-keyword-cell" data-label="Kata Kunci"><?php echo esc_html($keyword); ?></td>
+            <td class="vd-event-cell" data-label="Event"><?php echo esc_html($event_short); ?></td>
+            <td class="vd-status-cell" data-label="Status">
+              <span class="vd-status-chip <?php echo esc_attr($status_class); ?>">
+                <?php echo esc_html($status_raw); ?>
+              </span>
             </td>
-            <td class="vd-ip-cell" title="<?php echo esc_attr($click->ip_address); ?>">
-              <?php echo esc_html($click->ip_address); ?>
+            <td class="vd-retry-cell" data-label="Retry"><?php echo esc_html($retry_count); ?></td>
+            <td class="vd-error-cell" data-label="Error" title="<?php echo esc_attr($last_error); ?>">
+              <?php echo esc_html($last_error); ?>
             </td>
-            <td class="vd-ua-cell" title="<?php echo esc_attr($click->user_agent); ?>">
-              <?php echo esc_html($click->user_agent); ?>
+            <td class="vd-page-cell" data-label="Page" title="<?php echo esc_attr($click->referer); ?>">
+              <div class="vd-copy-wrap">
+                <span class="vd-copy-text"><?php echo esc_html($click->referer); ?></span>
+                <button
+                  type="button"
+                  class="button-link vd-copy-btn"
+                  data-copy="<?php echo esc_attr($click->referer); ?>"
+                  title="Copy Page">
+                  <span class="vd-copy-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M8 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v1H8V8z"></path>
+                      <path d="M5 11a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9zm2-1a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H7z"></path>
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </td>
+            <td class="vd-ip-cell" data-label="IP" title="<?php echo esc_attr($click->ip_address); ?>">
+              <div class="vd-copy-wrap">
+                <span class="vd-copy-text"><?php echo esc_html($click->ip_address); ?></span>
+                <button
+                  type="button"
+                  class="button-link vd-copy-btn"
+                  data-copy="<?php echo esc_attr($click->ip_address); ?>"
+                  title="Copy IP">
+                  <span class="vd-copy-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M8 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v1H8V8z"></path>
+                      <path d="M5 11a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9zm2-1a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H7z"></path>
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </td>
+            <td class="vd-ua-cell" data-label="User Agent" title="<?php echo esc_attr($click->user_agent); ?>">
+              <div class="vd-copy-wrap">
+                <span class="vd-copy-text"><?php echo esc_html($click->user_agent); ?></span>
+                <button
+                  type="button"
+                  class="button-link vd-copy-btn"
+                  data-copy="<?php echo esc_attr($click->user_agent); ?>"
+                  title="Copy User Agent">
+                  <span class="vd-copy-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M8 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v1H8V8z"></path>
+                      <path d="M5 11a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9zm2-1a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H7z"></path>
+                    </svg>
+                  </span>
+                </button>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -921,6 +1191,35 @@ function velocity_render_whatsapp_clicks_page()
 <?php endif; ?>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+
+      return new Promise(function(resolve, reject) {
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+          var success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          if (success) {
+            resolve();
+          } else {
+            reject();
+          }
+        } catch (error) {
+          document.body.removeChild(textarea);
+          reject(error);
+        }
+      });
+    }
+
     var selectAll = document.getElementById('vd_select_all_clicks');
     if (selectAll) {
       selectAll.addEventListener('click', function() {
@@ -930,6 +1229,25 @@ function velocity_render_whatsapp_clicks_page()
         });
       });
     }
+
+    var copyButtons = document.querySelectorAll('.vd-copy-btn');
+    copyButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        var text = button.getAttribute('data-copy') || '';
+        if (!text) {
+          return;
+        }
+
+        copyTextToClipboard(text).then(function() {
+          button.classList.add('is-copied');
+          button.setAttribute('title', 'Copied');
+          setTimeout(function() {
+            button.classList.remove('is-copied');
+            button.setAttribute('title', 'Copy');
+          }, 1200);
+        });
+      });
+    });
   });
 </script>
 </div>
