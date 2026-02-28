@@ -14,7 +14,7 @@ function tampilan_baru()
       bottom: 16px;
       right: 16px;
       z-index: 9999;
-      display: flex;
+      display: none;
       align-items: center;
       gap: 12px;
       background-color: #25d366;
@@ -30,6 +30,12 @@ function tampilan_baru()
       animation: smooth-bounce 2s infinite;
       overflow: hidden;
       transition: transform 0.2s ease;
+    }
+
+    @media (max-width: 991px) {
+      .wa-float {
+        display: flex;
+      }
     }
 
     .wa-float svg {
@@ -69,6 +75,7 @@ function tampilan_baru()
     }
 
     @keyframes smooth-bounce {
+
       0%,
       100% {
         transform: translateY(0);
@@ -94,7 +101,6 @@ function tampilan_baru()
         transform: translateY(0);
       }
     }
-
   </style>
   <?php
   $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
@@ -138,124 +144,124 @@ function tampilan_baru()
 
         const getCookieValue = function(name) {
           try {
-             const value = `; ${document.cookie || ''}`;
-             const parts = value.split(`; ${name}=`);
-             if (parts.length !== 2) {
-               return '';
-             }
-             const raw = parts.pop().split(';').shift() || '';
-             return decodeURIComponent(raw);
+            const value = `; ${document.cookie || ''}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length !== 2) {
+              return '';
+            }
+            const raw = parts.pop().split(';').shift() || '';
+            return decodeURIComponent(raw);
           } catch (e) {
-             return '';
+            return '';
           }
         };
 
         // Resolve final WA target in client-side to avoid stale cached HTML values.
         const resolveWaTarget = function() {
           try {
-              const urlParams = new URLSearchParams(window.location.search || '');
-              const hasAdsParams = urlParams.has('gclid') || urlParams.has('wbraid') || urlParams.has('gbraid') ||
-                (urlParams.get('utm_source') === 'google' && (urlParams.has('utm_medium') || urlParams.has('utm_content')));
-              const isAds = (waFloat.dataset.trafficType === 'ads') || hasAdsParams;
+            const urlParams = new URLSearchParams(window.location.search || '');
+            const hasAdsParams = urlParams.has('gclid') || urlParams.has('wbraid') || urlParams.has('gbraid') ||
+              (urlParams.get('utm_source') === 'google' && (urlParams.has('utm_medium') || urlParams.has('utm_content')));
+            const isAds = (waFloat.dataset.trafficType === 'ads') || hasAdsParams;
 
-              let number = '6285701216057';
-              let greeting = 'v0';
-              let message = 'Hallo, Saya tertarik buat website di Velocity Developer [v0]. Mohon infonya.';
+            let number = '6285701216057';
+            let greeting = 'v0';
+            let message = 'Hallo, Saya tertarik buat website di Velocity Developer [v0]. Mohon infonya.';
 
-              if (isAds) {
-                number = '6285729319861';
-                let cookieGreeting = (getCookieValue('greeting') || '').trim();
-                const queryGreeting = (urlParams.get('greeting') || '').trim();
-                
-                greeting = cookieGreeting || queryGreeting || (waFloat.dataset.greeting || '').trim() || 'vx';
-                
-                // Force update if we found a better greeting than vx
-                if (greeting !== 'vx' && greeting !== 'v0') {
-                    // Ensure future calls see this
-                    waFloat.dataset.greeting = greeting;
-                }
+            if (isAds) {
+              number = '6285729319861';
+              let cookieGreeting = (getCookieValue('greeting') || '').trim();
+              const queryGreeting = (urlParams.get('greeting') || '').trim();
 
-                message = `Hallo, Saya tertarik buat website di Velocity Developer [${greeting}]. Mohon infonya.`;
+              greeting = cookieGreeting || queryGreeting || (waFloat.dataset.greeting || '').trim() || 'vx';
+
+              // Force update if we found a better greeting than vx
+              if (greeting !== 'vx' && greeting !== 'v0') {
+                // Ensure future calls see this
+                waFloat.dataset.greeting = greeting;
               }
 
-              return {
-                isAds: isAds,
-                greeting: isAds ? greeting : 'v0',
-                url: `https://wa.me/${number}?text=${encodeURIComponent(message)}`
-              };
-          } catch(err) {
-              console.error('WA Logic Error:', err);
-              // Fallback to default
-              return {
-                 isAds: false,
-                 greeting: 'v0',
-                 url: waFloat.href || 'https://wa.me/6285701216057'
-              };
+              message = `Hallo, Saya tertarik buat website di Velocity Developer [${greeting}]. Mohon infonya.`;
+            }
+
+            return {
+              isAds: isAds,
+              greeting: isAds ? greeting : 'v0',
+              url: `https://wa.me/${number}?text=${encodeURIComponent(message)}`
+            };
+          } catch (err) {
+            console.error('WA Logic Error:', err);
+            // Fallback to default
+            return {
+              isAds: false,
+              greeting: 'v0',
+              url: waFloat.href || 'https://wa.me/6285701216057'
+            };
           }
         };
 
         const initialWaTarget = resolveWaTarget();
-        
+
         // Update visual immediately based on cookie/URL
         if (initialWaTarget && initialWaTarget.isAds) {
-           waFloat.href = initialWaTarget.url;
-           waFloat.dataset.trafficType = 'ads';
-           waFloat.dataset.greeting = initialWaTarget.greeting;
+          waFloat.href = initialWaTarget.url;
+          waFloat.dataset.trafficType = 'ads';
+          waFloat.dataset.greeting = initialWaTarget.greeting;
         }
-        
+
         waFloat.addEventListener('click', function() {
           try {
-              const waTarget = resolveWaTarget();
-              waFloat.href = waTarget.url;
-              waFloat.dataset.trafficType = waTarget.isAds ? 'ads' : 'organic';
-              waFloat.dataset.greeting = waTarget.greeting;
+            const waTarget = resolveWaTarget();
+            waFloat.href = waTarget.url;
+            waFloat.dataset.trafficType = waTarget.isAds ? 'ads' : 'organic';
+            waFloat.dataset.greeting = waTarget.greeting;
 
-              if (typeof dataLayer !== 'undefined' && Array.isArray(dataLayer)) {
-                dataLayer.push({
-                  event: 'klik_wa_ads'
-                });
-              }
+            if (typeof dataLayer !== 'undefined' && Array.isArray(dataLayer)) {
+              dataLayer.push({
+                event: 'klik_wa_ads'
+              });
+            }
 
-              const ajaxUrl = waFloat.dataset.asyncTrackUrl || '';
-              const nonce = waFloat.dataset.asyncTrackNonce || '';
-              if (!ajaxUrl || !nonce) {
+            const ajaxUrl = waFloat.dataset.asyncTrackUrl || '';
+            const nonce = waFloat.dataset.asyncTrackNonce || '';
+            if (!ajaxUrl || !nonce) {
+              return;
+            }
+
+            const eventId = (window.crypto && typeof window.crypto.randomUUID === 'function') ?
+              window.crypto.randomUUID() :
+              ('vdwa_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+
+            const payload = new URLSearchParams();
+            payload.append('action', 'vd_async_track_wa_click');
+            payload.append('nonce', nonce);
+            payload.append('event_id', eventId);
+            payload.append('greeting', waTarget.greeting || 'v0');
+            payload.append('page_url', window.location.href);
+
+            if (navigator.sendBeacon) {
+              const beaconQueued = navigator.sendBeacon(ajaxUrl, payload);
+              if (beaconQueued) {
                 return;
               }
+            }
 
-              const eventId = (window.crypto && typeof window.crypto.randomUUID === 'function')
-                ? window.crypto.randomUUID()
-                : ('vdwa_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
-
-              const payload = new URLSearchParams();
-              payload.append('action', 'vd_async_track_wa_click');
-              payload.append('nonce', nonce);
-              payload.append('event_id', eventId);
-              payload.append('greeting', waTarget.greeting || 'v0');
-              payload.append('page_url', window.location.href);
-
-              if (navigator.sendBeacon) {
-                const beaconQueued = navigator.sendBeacon(ajaxUrl, payload);
-                if (beaconQueued) {
-                  return;
+            if (window.fetch) {
+              fetch(ajaxUrl, {
+                method: 'POST',
+                body: payload,
+                credentials: 'same-origin',
+                keepalive: true,
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
                 }
-              }
-
-              if (window.fetch) {
-                fetch(ajaxUrl, {
-                  method: 'POST',
-                  body: payload,
-                  credentials: 'same-origin',
-                  keepalive: true,
-                  headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                  }
-                }).catch(function() {});
-              }
-          } catch(clickErr) {
-             console.error('WA Click Error:', clickErr);
+              }).catch(function() {});
+            }
+          } catch (clickErr) {
+            console.error('WA Click Error:', clickErr);
           }
         });
-      } catch(mainErr) {
+      } catch (mainErr) {
         console.error('WA Init Error:', mainErr);
       }
     });
@@ -265,7 +271,7 @@ function tampilan_baru()
 }
 function whatsapp_floating()
 {
-  if (wp_is_mobile() && !is_page('form-chat') && !is_page('order')) {
+  if (!is_page('form-chat') && !is_page('order')) {
     echo tampilan_baru();
   }
 }
