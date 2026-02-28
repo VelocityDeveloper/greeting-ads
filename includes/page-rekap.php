@@ -605,6 +605,7 @@ function velocity_render_whatsapp_clicks_page()
 
   $from_date = isset($_GET['from_date']) ? sanitize_text_field($_GET['from_date']) : '';
   $to_date = isset($_GET['to_date']) ? sanitize_text_field($_GET['to_date']) : '';
+  $show_v0 = isset($_GET['show_v0']) && sanitize_text_field($_GET['show_v0']) === '1';
 
   if (isset($_POST['vd_wa_bulk_action']) && $_POST['vd_wa_bulk_action'] === 'delete' && !empty($_POST['vd_selected_ids'])) {
     check_admin_referer('vd_wa_bulk_delete', 'vd_wa_bulk_nonce');
@@ -647,25 +648,27 @@ function velocity_render_whatsapp_clicks_page()
       . ($has_greeting ? " greeting," : " '' AS greeting,")
       . " ip_address, referer, user_agent, created_at";
 
-    $total_all = (int) $wpdb->get_var("SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE ip_address <> ''");
+    $greeting_filter_sql = $has_greeting ? " AND (greeting IS NULL OR greeting <> 'v0')" : '';
+
+    $total_all = (int) $wpdb->get_var("SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE ip_address <> ''$greeting_filter_sql");
 
     $today_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''",
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''$greeting_filter_sql",
         $today
       )
     );
 
     $yesterday_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''",
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE DATE(created_at) = %s AND ip_address <> ''$greeting_filter_sql",
         $yesterday
       )
     );
 
     $month_count = (int) $wpdb->get_var(
       $wpdb->prepare(
-        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s) AND ip_address <> ''",
+        "SELECT COUNT(DISTINCT ip_address) FROM $table_name WHERE YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s) AND ip_address <> ''$greeting_filter_sql",
         $today,
         $today
       )
@@ -677,6 +680,10 @@ function velocity_render_whatsapp_clicks_page()
 
     $where = "WHERE 1=1";
     $where_params = [];
+
+    if ($has_greeting && !$show_v0) {
+      $where .= " AND (greeting IS NULL OR greeting <> 'v0')";
+    }
 
     if (!empty($from_date)) {
       $where .= " AND DATE(created_at) >= %s";
@@ -813,6 +820,13 @@ function velocity_render_whatsapp_clicks_page()
   <div>
     <label for="to_date">Sampai tanggal</label><br>
     <input type="date" id="to_date" name="to_date" value="<?php echo esc_attr($to_date); ?>">
+  </div>
+  <div>
+    <label for="show_v0" style="display:block;">&nbsp;</label>
+    <label style="display:flex;gap:6px;align-items:center;">
+      <input type="checkbox" id="show_v0" name="show_v0" value="1" <?php checked($show_v0, true); ?>>
+      Tampilkan organik (v0)
+    </label>
   </div>
   <div>
     <button type="submit" class="button button-primary">Filter</button>
@@ -1165,6 +1179,9 @@ function velocity_render_whatsapp_clicks_page()
         if (!empty($to_date)) {
           $base_args['to_date'] = $to_date;
         }
+        if ($show_v0) {
+          $base_args['show_v0'] = '1';
+        }
 
         $last = 0;
         foreach ($display_pages as $i) {
@@ -1187,7 +1204,7 @@ function velocity_render_whatsapp_clicks_page()
     </div>
   <?php endif; ?>
 <?php else: ?>
-  <div style="text-align: center; padding: 20px;width: 100%;">Belum ada klik yang terekam.</div>
+  <div style="text-align: center; padding: 20px;width: 100%;">Belum ada klik yang terekam sesuai filter.</div>
 <?php endif; ?>
 <script>
   document.addEventListener('DOMContentLoaded', function() {

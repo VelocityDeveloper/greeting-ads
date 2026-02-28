@@ -111,16 +111,17 @@ function rekap_chat_form()
 
 function vd_async_track_wa_click()
 {
-  $nonce_valid = check_ajax_referer('vd_async_wa_click', 'nonce', false);
-  if (!$nonce_valid) {
-    wp_send_json_error(['message' => 'Invalid nonce'], 403);
-  }
+  global $wpdb;
 
   // Ambil page_url lebih awal untuk validasi ads via parameter URL
   $page_url = isset($_POST['page_url']) ? esc_url_raw(wp_unslash($_POST['page_url'])) : '';
   if ($page_url === '' && isset($_SERVER['HTTP_REFERER'])) {
     $page_url = esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']));
   }
+
+  $nonce_valid = check_ajax_referer('vd_async_wa_click', 'nonce', false);
+  // Hapus validasi ketat nonce/referer agar seperti GTM (terima semua request)
+  // if (!$nonce_valid) { ... } logic dihapus
 
   $is_ads = get_ads_logic() || (isset($_COOKIE['traffic']) && $_COOKIE['traffic'] == 'ads');
 
@@ -140,14 +141,17 @@ function vd_async_track_wa_click()
     }
   }
 
-  if (!$is_ads) {
-    wp_send_json_success(['logged' => false, 'reason' => 'not_ads']);
-  }
-
   $greeting = isset($_POST['greeting']) ? sanitize_text_field(wp_unslash($_POST['greeting'])) : '';
   $greeting = trim($greeting);
-  if ($greeting === '') {
-    $greeting = 'vx';
+
+  if (!$is_ads) {
+    $greeting = 'v0';
+  } else {
+    if ($greeting === '' || $greeting === 'v0') {
+      $cookie_greeting = isset($_COOKIE['greeting']) ? sanitize_text_field(wp_unslash($_COOKIE['greeting'])) : '';
+      $cookie_greeting = trim($cookie_greeting);
+      $greeting = $cookie_greeting !== '' ? $cookie_greeting : 'vx';
+    }
   }
 
   $event_id = isset($_POST['event_id']) ? sanitize_text_field(wp_unslash($_POST['event_id'])) : '';
@@ -173,12 +177,24 @@ function vd_async_track_wa_click()
     $payload['user_agent'] = 'unknown';
   }
 
-  $scheduled = function_exists('vd_schedule_whatsapp_click_job')
-    ? vd_schedule_whatsapp_click_job($payload, 0, 1)
+  if (function_exists('vd_maybe_upgrade_whatsapp_clicks_table')) {
+    vd_maybe_upgrade_whatsapp_clicks_table();
+  }
+
+  $saved = function_exists('vd_upsert_whatsapp_click_status')
+    ? vd_upsert_whatsapp_click_status($payload, 'success', 0, '')
     : false;
 
-  if (!$scheduled) {
-    wp_send_json_error(['logged' => false, 'message' => 'Failed to schedule async click log'], 500);
+  if (!$saved) {
+    $error_message = isset($wpdb) && isset($wpdb->last_error) && $wpdb->last_error ? $wpdb->last_error : 'Failed to save WA click log';
+
+    $scheduled = function_exists('vd_schedule_whatsapp_click_retry')
+      ? vd_schedule_whatsapp_click_retry($payload, 0, $error_message)
+      : false;
+
+    if (!$scheduled) {
+      wp_send_json_error(['logged' => false, 'message' => $error_message], 500);
+    }
   }
 
   wp_send_json_success(['logged' => true]);
